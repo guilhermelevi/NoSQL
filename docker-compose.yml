@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mongodb:
-    image: mongo:4.4
+    image: mongo:8.2
     container_name: mongodb-container
     restart: always
     ports:
@@ -13,11 +13,11 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: 123456
-    # logging:
-    #   driver: gelf
-    #   options:
-    #     gelf-address: "udp://localhost:12201"
-    #     tag: "mongodb-log"
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://localhost:12201"
+        tag: "mongodb-log"
     # shm_size: 25g
 volumes:
   mongodb_data:
