@@ -1,9 +1,0 @@
-exit
-db.createCollection("disciplinas");db.createCollection("professores");db.createCollection("cursos");db.createCollection("alunos");
-db
-use dbNoSQLBD
-show dbs
-exit
-esc
-clear
-dbuse dbNoSQLBDshow dbsuse dbExercicioshow dbsdb.version()

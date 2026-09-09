@@ -1,0 +1,40 @@
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "João Silva", "valor": 120.00, "tipo": "compra", "data": "2026-02-10T10:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Maria Souza", "valor": 310.90, "tipo": "venda", "data": "2026-02-11T15:30:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Carlos Pereira", "valor": 450.00, "tipo": "compra", "data": "2026-02-12T09:15:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Ana Paula", "valor": 85.50, "tipo": "venda", "data": "2026-02-12T14:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Lucas Oliveira", "valor": 230.75, "tipo": "compra", "data": "2026-02-13T11:30:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Fernanda Costa", "valor": 175.20, "tipo": "venda", "data": "2026-02-14T16:45:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Rafael Almeida", "valor": 520.00, "tipo": "compra", "data": "2026-02-15T08:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Beatriz Santos", "valor": 99.90, "tipo": "compra", "data": "2026-02-16T13:20:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Thiago Ferreira", "valor": 680.00, "tipo": "venda", "data": "2026-02-17T10:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Carla Rodrigues", "valor": 145.30, "tipo": "compra", "data": "2026-02-18T09:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "João Silva", "valor": 390.00, "tipo": "venda", "data": "2026-02-19T15:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Maria Souza", "valor": 55.00, "tipo": "compra", "data": "2026-02-20T11:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Eduardo Lima", "valor": 800.00, "tipo": "venda", "data": "2026-02-21T14:30:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Juliana Martins", "valor": 210.60, "tipo": "compra", "data": "2026-02-22T10:45:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Paulo Gomes", "valor": 330.00, "tipo": "compra", "data": "2026-02-23T09:30:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Amanda Rocha", "valor": 475.80, "tipo": "venda", "data": "2026-02-24T16:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Roberto Carvalho", "valor": 125.00, "tipo": "compra", "data": "2026-02-25T08:30:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Letícia Sousa", "valor": 290.40, "tipo": "venda", "data": "2026-02-26T13:00:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Henrique Araújo", "valor": 615.00, "tipo": "compra", "data": "2026-02-27T11:15:00" }
+{ "index": { "_index": "transacoes" } }
+{ "usuario": "Priscila Mendes", "valor": 180.00, "tipo": "venda", "data": "2026-02-28T15:45:00" }

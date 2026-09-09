@@ -1,0 +1,40 @@
+{ "index": { "_index": "indice_conhecimento", "_id": "4" } }
+{ "titulo": "Banco vetorial", "conteudo": "Bancos vetoriais armazenam embeddings para busca por similaridade.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T10:20:00", "embedding": [0.65, -0.10, 0.22, 0.48, -0.11, 0.58, 0.44, -0.07, 0.19, 0.36] }
+{ "index": { "_index": "indice_conhecimento", "_id": "5" } }
+{ "titulo": "Busca híbrida", "conteudo": "A busca híbrida combina BM25 com similaridade vetorial.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T10:25:00", "embedding": [0.69, -0.09, 0.18, 0.52, -0.17, 0.57, 0.40, -0.05, 0.15, 0.42] }
+{ "index": { "_index": "indice_conhecimento", "_id": "6" } }
+{ "titulo": "Rio de Janeiro", "conteudo": "Rio de Janeiro é famoso por suas praias, pelo Cristo Redentor e pelo Carnaval.", "categoria": "turismo", "data_publicacao": "2026-03-10T10:30:00", "embedding": [0.14, -0.42, 0.76, 0.38, -0.84, 0.18, 0.28, -0.06, 0.58, 0.16] }
+{ "index": { "_index": "indice_conhecimento", "_id": "7" } }
+{ "titulo": "Aprendizado de máquina", "conteudo": "Aprendizado de máquina permite que sistemas melhorem automaticamente com a experiência.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T10:35:00", "embedding": [0.71, -0.14, 0.20, 0.51, -0.18, 0.63, 0.46, -0.10, 0.12, 0.41] }
+{ "index": { "_index": "indice_conhecimento", "_id": "8" } }
+{ "titulo": "Rio Amazonas", "conteudo": "O Rio Amazonas é o maior rio do mundo em volume de água e atravessa a Amazônia.", "categoria": "geografia", "data_publicacao": "2026-03-10T10:40:00", "embedding": [0.11, -0.46, 0.79, 0.35, -0.87, 0.16, 0.23, -0.07, 0.64, 0.13] }
+{ "index": { "_index": "indice_conhecimento", "_id": "9" } }
+{ "titulo": "Redes neurais artificiais", "conteudo": "Redes neurais são modelos computacionais inspirados no cérebro humano usados em IA.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T10:45:00", "embedding": [0.68, -0.11, 0.17, 0.54, -0.15, 0.61, 0.43, -0.08, 0.14, 0.40] }
+{ "index": { "_index": "indice_conhecimento", "_id": "10" } }
+{ "titulo": "Pantanal", "conteudo": "O Pantanal é a maior área úmida tropical do mundo, localizada no centro-oeste do Brasil.", "categoria": "geografia", "data_publicacao": "2026-03-10T10:50:00", "embedding": [0.13, -0.43, 0.78, 0.34, -0.86, 0.17, 0.26, -0.06, 0.62, 0.15] }
+{ "index": { "_index": "indice_conhecimento", "_id": "11" } }
+{ "titulo": "NoSQL e bancos de dados distribuídos", "conteudo": "Bancos NoSQL oferecem escalabilidade horizontal e esquemas flexíveis para grandes volumes de dados.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T10:55:00", "embedding": [0.67, -0.12, 0.19, 0.50, -0.16, 0.59, 0.42, -0.09, 0.16, 0.38] }
+{ "index": { "_index": "indice_conhecimento", "_id": "12" } }
+{ "titulo": "Cerrado brasileiro", "conteudo": "O Cerrado é o segundo maior bioma do Brasil e considerado a savana mais biodiversa do mundo.", "categoria": "geografia", "data_publicacao": "2026-03-10T11:00:00", "embedding": [0.10, -0.45, 0.80, 0.32, -0.88, 0.15, 0.24, -0.05, 0.63, 0.12] }
+{ "index": { "_index": "indice_conhecimento", "_id": "13" } }
+{ "titulo": "Computação em nuvem", "conteudo": "A computação em nuvem fornece serviços de TI sob demanda via internet, como servidores e armazenamento.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T11:05:00", "embedding": [0.70, -0.13, 0.21, 0.53, -0.14, 0.62, 0.45, -0.07, 0.13, 0.43] }
+{ "index": { "_index": "indice_conhecimento", "_id": "14" } }
+{ "titulo": "Mata Atlântica", "conteudo": "A Mata Atlântica é um dos biomas mais ameaçados do planeta, com alta biodiversidade.", "categoria": "geografia", "data_publicacao": "2026-03-10T11:10:00", "embedding": [0.12, -0.44, 0.77, 0.36, -0.85, 0.16, 0.25, -0.06, 0.61, 0.14] }
+{ "index": { "_index": "indice_conhecimento", "_id": "15" } }
+{ "titulo": "Processamento de linguagem natural", "conteudo": "PLN é a área da IA que permite que computadores entendam e gerem linguagem humana.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T11:15:00", "embedding": [0.66, -0.10, 0.23, 0.49, -0.19, 0.60, 0.47, -0.08, 0.17, 0.37] }
+{ "index": { "_index": "indice_conhecimento", "_id": "16" } }
+{ "titulo": "Curitiba", "conteudo": "Curitiba é a capital do Paraná e referência em planejamento urbano e transporte público.", "categoria": "geografia", "data_publicacao": "2026-03-10T11:20:00", "embedding": [0.09, -0.47, 0.82, 0.31, -0.90, 0.14, 0.22, -0.04, 0.65, 0.11] }
+{ "index": { "_index": "indice_conhecimento", "_id": "17" } }
+{ "titulo": "Contêineres e Docker", "conteudo": "Docker é uma plataforma de contêineres que facilita empacotar e executar aplicações em ambientes isolados.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T11:25:00", "embedding": [0.73, -0.15, 0.16, 0.55, -0.13, 0.64, 0.41, -0.11, 0.11, 0.44] }
+{ "index": { "_index": "indice_conhecimento", "_id": "18" } }
+{ "titulo": "Caatinga", "conteudo": "A Caatinga é o único bioma exclusivamente brasileiro, localizado na região Nordeste.", "categoria": "geografia", "data_publicacao": "2026-03-10T11:30:00", "embedding": [0.11, -0.43, 0.78, 0.33, -0.87, 0.17, 0.27, -0.05, 0.62, 0.13] }
+{ "index": { "_index": "indice_conhecimento", "_id": "19" } }
+{ "titulo": "Microsserviços", "conteudo": "Microsserviços dividem uma aplicação em serviços menores e independentes, facilitando escalabilidade.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T11:35:00", "embedding": [0.69, -0.11, 0.20, 0.51, -0.16, 0.58, 0.44, -0.09, 0.15, 0.39] }
+{ "index": { "_index": "indice_conhecimento", "_id": "20" } }
+{ "titulo": "Floresta Amazônica", "conteudo": "A Floresta Amazônica cobre cerca de 40% do território brasileiro e é o maior pulmão verde do planeta.", "categoria": "geografia", "data_publicacao": "2026-03-10T11:40:00", "embedding": [0.13, -0.45, 0.80, 0.34, -0.88, 0.15, 0.25, -0.06, 0.63, 0.13] }
+{ "index": { "_index": "indice_conhecimento", "_id": "21" } }
+{ "titulo": "Elasticsearch avançado", "conteudo": "O Elasticsearch oferece recursos avançados como agregações, ILM, snapshots e busca vetorial.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T11:45:00", "embedding": [0.71, -0.12, 0.18, 0.52, -0.17, 0.61, 0.43, -0.10, 0.14, 0.41] }
+{ "index": { "_index": "indice_conhecimento", "_id": "22" } }
+{ "titulo": "Salvador", "conteudo": "Salvador é a capital da Bahia e a terceira maior cidade do Brasil, com forte herança afro-brasileira.", "categoria": "geografia", "data_publicacao": "2026-03-10T11:50:00", "embedding": [0.10, -0.44, 0.79, 0.35, -0.86, 0.16, 0.26, -0.05, 0.61, 0.14] }
+{ "index": { "_index": "indice_conhecimento", "_id": "23" } }
+{ "titulo": "RAG com Elasticsearch", "conteudo": "RAG usa o Elasticsearch como base de conhecimento para recuperar contexto antes de acionar um LLM.", "categoria": "tecnologia", "data_publicacao": "2026-03-10T11:55:00", "embedding": [0.72, -0.13, 0.17, 0.53, -0.15, 0.63, 0.45, -0.08, 0.13, 0.42] }

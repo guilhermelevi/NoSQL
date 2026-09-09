@@ -1,0 +1,40 @@
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Carlos Pereira", "idade": 41, "cidade": "Brasília" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Ana Paula", "idade": 28, "cidade": "São Paulo" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Lucas Oliveira", "idade": 35, "cidade": "Rio de Janeiro" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Fernanda Costa", "idade": 22, "cidade": "Curitiba" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Rafael Almeida", "idade": 45, "cidade": "Porto Alegre" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Beatriz Santos", "idade": 31, "cidade": "Salvador" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Thiago Ferreira", "idade": 27, "cidade": "Fortaleza" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Carla Rodrigues", "idade": 38, "cidade": "Recife" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Eduardo Lima", "idade": 50, "cidade": "Manaus" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Juliana Martins", "idade": 24, "cidade": "Belém" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Paulo Gomes", "idade": 33, "cidade": "Goiânia" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Amanda Rocha", "idade": 29, "cidade": "Florianópolis" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Roberto Carvalho", "idade": 42, "cidade": "Natal" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Letícia Sousa", "idade": 26, "cidade": "Maceió" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Henrique Araújo", "idade": 37, "cidade": "João Pessoa" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Priscila Mendes", "idade": 32, "cidade": "Teresina" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Vinicius Barbosa", "idade": 44, "cidade": "Campo Grande" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Camila Peixoto", "idade": 23, "cidade": "Cuiabá" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Gustavo Lopes", "idade": 39, "cidade": "Porto Velho" }
+{ "index": { "_index": "meu_indice" } }
+{ "nome": "Isabela Nunes", "idade": 36, "cidade": "Macapá" }
