@@ -1,4 +1,4 @@
-# LAB 04 – Elastic Stack – Evidências de execução
+# Lab 2 – Elastic – Parte 1 – Evidências de execução
 
 Executado em 08/09/2026 20:01 · Elasticsearch 8.15.3 · macOS/OrbStack
 

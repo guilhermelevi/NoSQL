@@ -27,7 +27,7 @@ req() {
   echo "OK: $titulo"
 }
 
-echo "# LAB 04 – Elastic Stack – Evidências de execução" >> "$OUT"
+echo "# Lab 2 – Elastic – Parte 1 – Evidências de execução" >> "$OUT"
 echo "" >> "$OUT"
 echo "Executado em $(date '+%d/%m/%Y %H:%M') · Elasticsearch 8.15.3 · macOS/OrbStack" >> "$OUT"
 echo "" >> "$OUT"
