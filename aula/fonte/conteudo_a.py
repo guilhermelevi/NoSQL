@@ -14,9 +14,9 @@ MODULOS.append({
              'depois que ele já estava consolidado, e por que exigiram estruturas diferentes.',
  'objetivos': [
    'Identificar as três pressões concretas que motivaram os bancos não relacionais: esquema móvel, escala horizontal e busca por relevância.',
-   'Situar MongoDB e Elasticsearch dentro da taxonomia NoSQL, sabendo dizer a que família cada um pertence.',
+   'Situar MongoDB, Elasticsearch e Redis dentro da taxonomia NoSQL, sabendo dizer a que família cada um pertence.',
    'Enunciar o teorema CAP com precisão, incluindo o que a versão popular dele distorce.',
-   'Sustentar a tese central da aula: os dois sistemas dos laboratórios não competem, se complementam.',
+   'Sustentar a tese central da aula: os três sistemas dos laboratórios não competem entre si, ocupam camadas diferentes.',
  ],
  'conceitos': [
    {'nome': 'NoSQL não quer dizer "sem SQL"',
@@ -30,17 +30,21 @@ MODULOS.append({
       '"NoSQL não tem esquema". O MongoDB tem transação multi-documento desde a versão 4.0 e permite '
       'validação de esquema por coleção. A generalização é falsa para praticamente qualquer afirmação.'},
 
-   {'nome': 'A taxonomia: cinco famílias, dois representantes',
-    'explicacao': 'Chave-valor (Redis, DynamoDB) guarda um valor opaco sob uma chave e não sabe nada '
-      'sobre o conteúdo. Documento (MongoDB, CouchDB) guarda estruturas aninhadas e sabe consultar '
-      'campos dentro delas. Coluna larga (Cassandra, HBase) organiza por família de colunas e otimiza '
-      'escrita em volume. Grafo (Neo4j) trata a relação como cidadã de primeira classe. Motor de busca '
+   {'nome': 'A taxonomia: cinco famílias, três representantes',
+    'explicacao': 'Chave-valor (DynamoDB, Memcached) guarda um valor sob uma chave, em geral sem saber '
+      'o que há dentro. Documento (MongoDB, CouchDB) guarda estruturas aninhadas e sabe consultar campos '
+      'dentro delas. Coluna larga (Cassandra, HBase) organiza por família de colunas e otimiza escrita em '
+      'volume. Grafo (Neo4j) trata a relação como cidadã de primeira classe. Motor de busca '
       '(Elasticsearch, Solr) inverte o problema: em vez de ir do documento ao conteúdo, vai do termo aos '
-      'documentos. Os dois laboratórios cobriram justamente as duas famílias mais usadas juntas.',
-    'analogia': 'Chave-valor é o guarda-volumes: você entrega uma mala, recebe uma ficha, e ninguém '
-      'olha dentro. Documento é o arquivo de pastas: cada pasta tem estrutura própria e dá para procurar '
-      'por um campo específico. Motor de busca é o índice remissivo no fim do livro: ele não guarda o '
-      'texto, guarda em que páginas cada palavra aparece.'},
+      'documentos. O Redis costuma ser classificado como chave-valor, mas a rigor escapa da caixa: o '
+      'valor não é opaco, é uma estrutura que o servidor sabe manipular — daí o nome que ele próprio '
+      'usa, data structure server. Os três laboratórios cobriram documento, motor de busca e chave-valor, '
+      'justamente as famílias que mais aparecem juntas num mesmo sistema.',
+    'analogia': 'Chave-valor clássico é o guarda-volumes: você entrega uma mala, recebe uma ficha, e '
+      'ninguém olha dentro. Documento é o arquivo de pastas: cada pasta tem estrutura própria e dá para '
+      'procurar por um campo específico. Motor de busca é o índice remissivo no fim do livro: não guarda '
+      'o texto, guarda em que páginas cada palavra aparece. E o Redis é a mesa de trabalho: o que está '
+      'ao alcance da mão agora, já organizado na forma em que vai ser usado.'},
 
    {'nome': 'ACID e BASE',
     'explicacao': 'ACID (atomicidade, consistência, isolamento, durabilidade) é a garantia de que uma '
@@ -64,11 +68,12 @@ MODULOS.append({
       'por consulta. A classificação é de configuração, não de produto.'},
 
    {'nome': 'A tese desta aula',
-    'explicacao': 'Os dois laboratórios não foram exercícios independentes. O Lab 2 montou, sem anunciar, '
-      'uma arquitetura de produção clássica: o MongoDB do Lab 1 emitindo logs, o Logstash recebendo, o '
-      'Elasticsearch indexando, o Kibana exibindo. Essa é a divisão de trabalho real: um sistema guarda '
-      'a verdade com garantia de escrita; o outro constrói um índice derivado, otimizado para uma pergunta '
-      'que o primeiro responde mal. Toda a aula vai voltar a esse ponto.',
+    'explicacao': 'Os laboratórios não foram exercícios independentes. O Lab 2 montou, sem anunciar, uma '
+      'arquitetura de produção clássica: o MongoDB do Lab 1 emitindo logs, o Logstash recebendo, o '
+      'Elasticsearch indexando, o Kibana exibindo. O Lab 3 trouxe a terceira peça. A divisão de trabalho é '
+      'esta: um sistema guarda a verdade com garantia de escrita; outro constrói um índice derivado, '
+      'otimizado para uma pergunta que o primeiro responde mal; o terceiro mantém em memória o estado que '
+      'precisa ser lido em microssegundos e que pode ser perdido sem tragédia. Toda a aula volta a esse ponto.',
     'analogia': 'Uma biblioteca tem o acervo e tem o catálogo. O acervo é a verdade: se o catálogo '
       'sumir, reconstrói-se a partir dos livros. Se o acervo sumir, o catálogo vira uma lista de coisas '
       'que não existem mais. O Elasticsearch é o catálogo.'},

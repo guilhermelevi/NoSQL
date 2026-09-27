@@ -9,13 +9,21 @@ d = json.load(open(ent))
 def e(t):
     return html.escape(str(t or ''))
 
+def md(t):
+    """Escapa HTML e depois converte `codigo` e **negrito** do texto de origem."""
+    t = e(t)
+    t = re.sub(r'`([^`]+)`', r'<code>\1</code>', t)
+    t = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', t)
+    return t
+
+
 def para(t):
     """Texto em paragrafos, respeitando quebras duplas."""
     t = (t or '').strip()
     if not t:
         return ''
     blocos = re.split(r'\n\s*\n', t)
-    return ''.join(f'<p>{e(b).replace(chr(10), "<br>")}</p>' for b in blocos)
+    return ''.join(f'<p>{md(b).replace(chr(10), "<br>")}</p>' for b in blocos)
 
 # cor por sistema, para o leitor localizar o assunto de relance
 TEMA = {
@@ -45,7 +53,7 @@ h1, h2, h3, h4, .rotulo, .num, th, .dur { font-family: 'Helvetica Neue', Helveti
         text-transform: uppercase; color: #6b7280; margin-bottom: 10mm; }
 .capa h1 { font-size: 30pt; line-height: 1.15; margin: 0 0 6mm; color: #111; font-weight: 700; }
 .capa .sub { font-size: 13pt; color: #444; font-style: italic; margin-bottom: 14mm; line-height: 1.5; }
-.capa .regua { height: 3px; background: linear-gradient(90deg, #00684A 0%, #00684A 45%, #0B64A0 55%, #0B64A0 100%);
+.capa .regua { height: 3px; background: linear-gradient(90deg, #00684A 0%, #00684A 30%, #0B64A0 37%, #0B64A0 63%, #A4231C 70%, #A4231C 100%);
         margin-bottom: 12mm; }
 .capa dl { display: grid; grid-template-columns: 32mm 1fr; gap: 2.5mm 6mm; font-size: 10pt; margin: 0; }
 .capa dt { font-family: 'Helvetica Neue', sans-serif; font-size: 8.5pt; text-transform: uppercase;
@@ -152,6 +160,7 @@ tr:nth-child(even) td { background: #fcfcfc; }
 .selo.elasticsearch { background: #e5eff7; color: #0B64A0; }
 .selo.integrador { background: #f0ecf7; color: #5b4a8a; }
 .selo.vetorial { background: #f7efe6; color: #8a6034; }
+.selo.redis { background: #fbeceb; color: #A4231C; }
 .selo.basico { background: #f3f4f6; color: #6b7280; }
 .selo.intermediario { background: #fdf6e3; color: #8a7333; }
 .selo.desafio { background: #fdf0ef; color: #a63d35; }
@@ -173,13 +182,14 @@ tr:nth-child(even) td { background: #fcfcfc; }
 .verbete { break-inside: avoid; page-break-inside: avoid; margin-bottom: 2.5mm; }
 """
 
-CORES = {'mongo': '#00684A', 'elastic': '#0B64A0', 'sintese': '#5b4a8a', 'neutro': '#374151'}
+CORES = {'mongo': '#00684A', 'elastic': '#0B64A0', 'redis': '#A4231C',
+         'sintese': '#5b4a8a', 'neutro': '#374151'}
 
 out = []
 A = out.append
 
 A('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">')
-A('<title>NoSQL na prática: do documento ao índice invertido</title>')
+A('<title>NoSQL na prática: do documento à estrutura em memória</title>')
 A(f'<style>{CSS}</style></head><body>')
 
 # ---------------- capa ----------------
@@ -191,18 +201,20 @@ n_quiz = len(d.get('avaliacao', {}).get('quiz', []))
 
 A('<div class="capa">')
 A('<div class="disciplina">Bancos de Dados N&atilde;o Relacionais &middot; CEUB</div>')
-A('<h1>NoSQL na pr&aacute;tica:<br>do documento ao<br>&iacute;ndice invertido</h1>')
-A('<div class="sub">Uma aula construída sobre dois laboratórios &mdash;<br>MongoDB como sistema de registro, Elastic Stack como camada de busca.</div>')
+A('<h1>NoSQL na pr&aacute;tica:<br>do documento &agrave;<br>estrutura em mem&oacute;ria</h1>')
+A('<div class="sub">Uma aula construída sobre três laboratórios &mdash; MongoDB como sistema de '
+  'registro, Elastic Stack como camada de busca, Redis como camada de latência.</div>')
 A('<div class="regua"></div>')
 A('<dl>')
 A('<dt>Disciplina</dt><dd>Bancos de Dados N&atilde;o Relacionais</dd>')
 A('<dt>Professor</dt><dd>Raul Carvalho de Souza</dd>')
 A('<dt>Aluno</dt><dd>Guilherme Levi</dd>')
 A(f'<dt>Dura&ccedil;&atilde;o</dt><dd>{total_min} minutos &middot; {len(mods)} m&oacute;dulos</dd>')
-A('<dt>Base</dt><dd>Lab 1 &mdash; MongoDB 8.2 &middot; Lab 2 &mdash; Elasticsearch 8.15, Kibana e Logstash</dd>')
+A('<dt>Base</dt><dd>Lab 1 &mdash; MongoDB 8.2 &middot; Lab 2 &mdash; Elasticsearch 8.15, Kibana e '
+  'Logstash &middot; Lab 3 &mdash; Redis 8.2 e RedisInsight</dd>')
 A('</dl>')
 A(f'<div class="rodape-capa">Todo comando e toda sa&iacute;da deste material foram executados de verdade '
-  f'nos dois laborat&oacute;rios. Inclui {n_ex} exerc&iacute;cios, {n_arm} armadilhas reais de ambiente '
+  f'nos tr&ecirc;s laborat&oacute;rios. Inclui {n_ex} exerc&iacute;cios, {n_arm} armadilhas reais de ambiente '
   f'e {n_quiz} quest&otilde;es de avalia&ccedil;&atilde;o.</div>')
 A('</div>')
 
@@ -226,11 +238,11 @@ for i, m in enumerate(mods):
     A('</div>')
     A(f'<h2>{e(m.get("titulo"))}</h2>')
     if m.get('abertura'):
-        A(f'<div class="abertura">{e(m["abertura"])}</div>')
+        A(f'<div class="abertura">{md(m["abertura"])}</div>')
     if m.get('objetivos'):
         A('<h3>Objetivos de aprendizagem</h3><ul>')
         for o in m['objetivos']:
-            A(f'<li>{e(o)}</li>')
+            A(f'<li>{md(o)}</li>')
         A('</ul>')
     if m.get('conceitos'):
         A('<h3>Conceitos</h3>')
@@ -239,9 +251,9 @@ for i, m in enumerate(mods):
             A(f'<h4>{e(c.get("nome"))}</h4>')
             A(para(c.get('explicacao')))
             if c.get('analogia'):
-                A(f'<div class="caixa analogia"><span class="rotulo">Analogia</span><p>{e(c["analogia"])}</p></div>')
+                A(f'<div class="caixa analogia"><span class="rotulo">Analogia</span><p>{md(c["analogia"])}</p></div>')
             if c.get('erro_comum'):
-                A(f'<div class="caixa erro"><span class="rotulo">Erro comum</span><p>{e(c["erro_comum"])}</p></div>')
+                A(f'<div class="caixa erro"><span class="rotulo">Erro comum</span><p>{md(c["erro_comum"])}</p></div>')
             A('</div>')
     if m.get('demos'):
         A('<h3>Na pr&aacute;tica</h3>')
@@ -252,7 +264,7 @@ for i, m in enumerate(mods):
             if dm.get('saida'):
                 A('<p class="rot-saida">Sa&iacute;da real</p>')
                 A(f'<pre class="saida">{e(dm["saida"])}</pre>')
-            A(f'<p class="explica">{e(dm.get("explicacao"))}</p>')
+            A(f'<p class="explica">{md(dm.get("explicacao"))}</p>')
             if dm.get('fonte'):
                 A(f'<p class="fonte">{e(dm["fonte"])}</p>')
             A('</div>')
@@ -261,7 +273,7 @@ for i, m in enumerate(mods):
     if m.get('perguntas'):
         A('<div class="perguntas"><h3>Para discutir em sala</h3><ol>')
         for p in m['perguntas']:
-            A(f'<li>{e(p)}</li>')
+            A(f'<li>{md(p)}</li>')
         A('</ol></div>')
     A('</section>')
 
@@ -269,21 +281,21 @@ for i, m in enumerate(mods):
 arms = d.get('armadilhas', [])
 if arms:
     A('<section class="secao"><h2>Anexo A &mdash; O que o roteiro n&atilde;o conta</h2>')
-    A('<p class="intro">Problemas que aconteceram de verdade ao executar os dois laborat&oacute;rios nesta '
+    A('<p class="intro">Problemas que aconteceram de verdade ao executar os tr&ecirc;s laborat&oacute;rios nesta '
       'm&aacute;quina. Cada um traz o sintoma, a causa raiz e a li&ccedil;&atilde;o generaliz&aacute;vel.</p>')
     for a in arms:
         A('<div class="armadilha">')
         A(f'<h4>{e(a.get("titulo"))} <span class="tag">{e(a.get("sistema"))}</span></h4>')
         A('<dl>')
-        A(f'<dt>Sintoma</dt><dd>{e(a.get("sintoma"))}</dd>')
-        A(f'<dt>Causa raiz</dt><dd>{e(a.get("causa_raiz"))}</dd>')
+        A(f'<dt>Sintoma</dt><dd>{md(a.get("sintoma"))}</dd>')
+        A(f'<dt>Causa raiz</dt><dd>{md(a.get("causa_raiz"))}</dd>')
         if a.get('diagnostico'):
-            A(f'<dt>Diagn&oacute;stico</dt><dd>{e(a["diagnostico"])}</dd>')
-        A(f'<dt>Corre&ccedil;&atilde;o</dt><dd>{e(a.get("correcao"))}</dd>')
+            A(f'<dt>Diagn&oacute;stico</dt><dd>{md(a["diagnostico"])}</dd>')
+        A(f'<dt>Corre&ccedil;&atilde;o</dt><dd>{md(a.get("correcao"))}</dd>')
         A('</dl>')
         if a.get('evidencia'):
             A(f'<pre class="saida">{e(a["evidencia"])}</pre>')
-        A(f'<div class="licao"><b>Li&ccedil;&atilde;o:</b> {e(a.get("licao"))}</div>')
+        A(f'<div class="licao"><b>Li&ccedil;&atilde;o:</b> {md(a.get("licao"))}</div>')
         A('</div>')
     A('</section>')
 
@@ -307,12 +319,12 @@ if exs:
         A('</div>')
         A(para(x.get('enunciado')))
         if x.get('esperado'):
-            A(f'<p><b>Espera-se:</b> {e(x["esperado"])}</p>')
+            A(f'<p><b>Espera-se:</b> {md(x["esperado"])}</p>')
         A('<div class="solucao"><span class="rotulo">Solu&ccedil;&atilde;o</span>')
         A(f'<pre class="codigo">{e(x.get("solucao_codigo"))}</pre>')
         A(para(x.get('solucao_comentario')))
         if x.get('criterio_correcao'):
-            A(f'<p style="font-size:9pt;color:#6b7280;margin:0"><b>Crit&eacute;rio de corre&ccedil;&atilde;o:</b> {e(x["criterio_correcao"])}</p>')
+            A(f'<p style="font-size:9pt;color:#6b7280;margin:0"><b>Crit&eacute;rio de corre&ccedil;&atilde;o:</b> {md(x["criterio_correcao"])}</p>')
         A('</div></div>')
     A('</section>')
 
@@ -324,32 +336,32 @@ if av.get('quiz'):
       'O gabarito explica por que cada alternativa errada &eacute; tentadora.</p>')
     for q in av['quiz']:
         A('<div class="questao">')
-        A(f'<p class="enunciado">{q.get("numero", "")}. {e(q.get("pergunta"))}</p>')
+        A(f'<p class="enunciado">{q.get("numero", "")}. {md(q.get("pergunta"))}</p>')
         A('<ol>')
         for alt in q.get('alternativas', []):
-            A(f'<li>{e(re.sub(r"^[A-D][)., ]+", "", str(alt)))}</li>')
+            A(f'<li>{md(re.sub(r"^[A-D][)., ]+", "", str(alt)))}</li>')
         A('</ol>')
-        A(f'<div class="gabarito"><b>Resposta: {e(q.get("correta"))}</b> &mdash; {e(q.get("justificativa"))}</div>')
+        A(f'<div class="gabarito"><b>Resposta: {e(q.get("correta"))}</b> &mdash; {md(q.get("justificativa"))}</div>')
         A('</div>')
 
 if av.get('tabela_decisao'):
     A('<h3 style="margin-top:8mm">Tabela de decis&atilde;o</h3>')
     A('<table><tr><th style="width:42%">Requisito</th><th style="width:16%">Sistema</th><th>Por qu&ecirc;</th></tr>')
     for r in av['tabela_decisao']:
-        A(f'<tr><td>{e(r.get("requisito"))}</td><td>{e(r.get("sistema"))}</td><td>{e(r.get("porque"))}</td></tr>')
+        A(f'<tr><td>{md(r.get("requisito"))}</td><td>{e(r.get("sistema"))}</td><td>{md(r.get("porque"))}</td></tr>')
     A('</table>')
 
 if av.get('glossario'):
     A('<h3 style="margin-top:8mm">Gloss&aacute;rio</h3><div class="glossario"><dl>')
     for g in av['glossario']:
         A(f'<div class="verbete"><dt>{e(g.get("termo"))}</dt>'
-          f'<dd>{e(g.get("definicao"))}</dd></div>')
+          f'<dd>{md(g.get("definicao"))}</dd></div>')
     A('</dl></div>')
 
 if av.get('leituras'):
     A('<h3 style="margin-top:8mm">Para ir al&eacute;m</h3><ul>')
     for l in av['leituras']:
-        A(f'<li>{e(l)}</li>')
+        A(f'<li>{md(l)}</li>')
     A('</ul>')
 
 if av.get('quiz'):

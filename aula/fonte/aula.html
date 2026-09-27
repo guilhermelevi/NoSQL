@@ -1,5 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<title>NoSQL na prática: do documento ao índice invertido</title>
+<title>NoSQL na prática: do documento à estrutura em memória</title>
 <style>
 @page { size: A4; }
 * { box-sizing: border-box; }
@@ -14,7 +14,7 @@ h1, h2, h3, h4, .rotulo, .num, th, .dur { font-family: 'Helvetica Neue', Helveti
         text-transform: uppercase; color: #6b7280; margin-bottom: 10mm; }
 .capa h1 { font-size: 30pt; line-height: 1.15; margin: 0 0 6mm; color: #111; font-weight: 700; }
 .capa .sub { font-size: 13pt; color: #444; font-style: italic; margin-bottom: 14mm; line-height: 1.5; }
-.capa .regua { height: 3px; background: linear-gradient(90deg, #00684A 0%, #00684A 45%, #0B64A0 55%, #0B64A0 100%);
+.capa .regua { height: 3px; background: linear-gradient(90deg, #00684A 0%, #00684A 30%, #0B64A0 37%, #0B64A0 63%, #A4231C 70%, #A4231C 100%);
         margin-bottom: 12mm; }
 .capa dl { display: grid; grid-template-columns: 32mm 1fr; gap: 2.5mm 6mm; font-size: 10pt; margin: 0; }
 .capa dt { font-family: 'Helvetica Neue', sans-serif; font-size: 8.5pt; text-transform: uppercase;
@@ -121,6 +121,7 @@ tr:nth-child(even) td { background: #fcfcfc; }
 .selo.elasticsearch { background: #e5eff7; color: #0B64A0; }
 .selo.integrador { background: #f0ecf7; color: #5b4a8a; }
 .selo.vetorial { background: #f7efe6; color: #8a6034; }
+.selo.redis { background: #fbeceb; color: #A4231C; }
 .selo.basico { background: #f3f4f6; color: #6b7280; }
 .selo.intermediario { background: #fdf6e3; color: #8a7333; }
 .selo.desafio { background: #fdf0ef; color: #a63d35; }
@@ -143,17 +144,17 @@ tr:nth-child(even) td { background: #fcfcfc; }
 </style></head><body>
 <div class="capa">
 <div class="disciplina">Bancos de Dados N&atilde;o Relacionais &middot; CEUB</div>
-<h1>NoSQL na pr&aacute;tica:<br>do documento ao<br>&iacute;ndice invertido</h1>
-<div class="sub">Uma aula construída sobre dois laboratórios &mdash;<br>MongoDB como sistema de registro, Elastic Stack como camada de busca.</div>
+<h1>NoSQL na pr&aacute;tica:<br>do documento &agrave;<br>estrutura em mem&oacute;ria</h1>
+<div class="sub">Uma aula construída sobre três laboratórios &mdash; MongoDB como sistema de registro, Elastic Stack como camada de busca, Redis como camada de latência.</div>
 <div class="regua"></div>
 <dl>
 <dt>Disciplina</dt><dd>Bancos de Dados N&atilde;o Relacionais</dd>
 <dt>Professor</dt><dd>Raul Carvalho de Souza</dd>
 <dt>Aluno</dt><dd>Guilherme Levi</dd>
-<dt>Dura&ccedil;&atilde;o</dt><dd>300 minutos &middot; 8 m&oacute;dulos</dd>
-<dt>Base</dt><dd>Lab 1 &mdash; MongoDB 8.2 &middot; Lab 2 &mdash; Elasticsearch 8.15, Kibana e Logstash</dd>
+<dt>Dura&ccedil;&atilde;o</dt><dd>430 minutos &middot; 11 m&oacute;dulos</dd>
+<dt>Base</dt><dd>Lab 1 &mdash; MongoDB 8.2 &middot; Lab 2 &mdash; Elasticsearch 8.15, Kibana e Logstash &middot; Lab 3 &mdash; Redis 8.2 e RedisInsight</dd>
 </dl>
-<div class="rodape-capa">Todo comando e toda sa&iacute;da deste material foram executados de verdade nos dois laborat&oacute;rios. Inclui 10 exerc&iacute;cios, 8 armadilhas reais de ambiente e 10 quest&otilde;es de avalia&ccedil;&atilde;o.</div>
+<div class="rodape-capa">Todo comando e toda sa&iacute;da deste material foram executados de verdade nos tr&ecirc;s laborat&oacute;rios. Inclui 14 exerc&iacute;cios, 14 armadilhas reais de ambiente e 14 quest&otilde;es de avalia&ccedil;&atilde;o.</div>
 </div>
 <div class="sumario"><h2>Sum&aacute;rio</h2><ul class="toc">
 <li><span class="n">M&oacute;d. 1</span><span class="t">Por que NoSQL: o problema antes da solução</span><span class="d">25 min</span></li>
@@ -163,11 +164,14 @@ tr:nth-child(even) td { background: #fcfcfc; }
 <li><span class="n">M&oacute;d. 5</span><span class="t">Elasticsearch: arquitetura e o índice invertido</span><span class="d">45 min</span></li>
 <li><span class="n">M&oacute;d. 6</span><span class="t">Elasticsearch: mapping, ingestão e consulta</span><span class="d">40 min</span></li>
 <li><span class="n">M&oacute;d. 7</span><span class="t">Busca vetorial, busca híbrida e RAG</span><span class="d">40 min</span></li>
-<li><span class="n">M&oacute;d. 8</span><span class="t">Os dois juntos: sistema de registro e camada de busca</span><span class="d">30 min</span></li>
+<li><span class="n">M&oacute;d. 8</span><span class="t">Redis: o servidor de estruturas de dados</span><span class="d">45 min</span></li>
+<li><span class="n">M&oacute;d. 9</span><span class="t">Redis: padrões de aplicação e atomicidade</span><span class="d">40 min</span></li>
+<li><span class="n">M&oacute;d. 10</span><span class="t">Redis além do chave-valor: probabilísticos, streams e durabilidade</span><span class="d">40 min</span></li>
+<li><span class="n">M&oacute;d. 11</span><span class="t">Os três juntos: registro, busca e latência</span><span class="d">35 min</span></li>
 <li class="grupo">Material complementar</li>
-<li><span class="n">A</span><span class="t">O que o roteiro n&atilde;o conta: armadilhas reais</span><span class="d">8 casos</span></li>
-<li><span class="n">B</span><span class="t">Exerc&iacute;cios com solu&ccedil;&atilde;o comentada</span><span class="d">10 exerc&iacute;cios</span></li>
-<li><span class="n">C</span><span class="t">Avalia&ccedil;&atilde;o, tabela de decis&atilde;o e gloss&aacute;rio</span><span class="d">10 quest&otilde;es</span></li>
+<li><span class="n">A</span><span class="t">O que o roteiro n&atilde;o conta: armadilhas reais</span><span class="d">14 casos</span></li>
+<li><span class="n">B</span><span class="t">Exerc&iacute;cios com solu&ccedil;&atilde;o comentada</span><span class="d">14 exerc&iacute;cios</span></li>
+<li><span class="n">C</span><span class="t">Avalia&ccedil;&atilde;o, tabela de decis&atilde;o e gloss&aacute;rio</span><span class="d">14 quest&otilde;es</span></li>
 </ul></div>
 <section class="modulo" style="--cor:#374151">
 <div class="modulo-head">
@@ -177,9 +181,9 @@ tr:nth-child(even) td { background: #fcfcfc; }
 <div class="abertura">O modelo relacional resolve bem um conjunto de problemas há cinquenta anos. A pergunta desta aula não é o que há de errado com ele — é que problemas apareceram depois que ele já estava consolidado, e por que exigiram estruturas diferentes.</div>
 <h3>Objetivos de aprendizagem</h3><ul>
 <li>Identificar as três pressões concretas que motivaram os bancos não relacionais: esquema móvel, escala horizontal e busca por relevância.</li>
-<li>Situar MongoDB e Elasticsearch dentro da taxonomia NoSQL, sabendo dizer a que família cada um pertence.</li>
+<li>Situar MongoDB, Elasticsearch e Redis dentro da taxonomia NoSQL, sabendo dizer a que família cada um pertence.</li>
 <li>Enunciar o teorema CAP com precisão, incluindo o que a versão popular dele distorce.</li>
-<li>Sustentar a tese central da aula: os dois sistemas dos laboratórios não competem, se complementam.</li>
+<li>Sustentar a tese central da aula: os três sistemas dos laboratórios não competem entre si, ocupam camadas diferentes.</li>
 </ul>
 <h3>Conceitos</h3>
 <div class="conceito">
@@ -188,9 +192,9 @@ tr:nth-child(even) td { background: #fcfcfc; }
 <div class="caixa erro"><span class="rotulo">Erro comum</span><p>Tratar NoSQL como categoria única e concluir que &quot;NoSQL não tem transação&quot; ou &quot;NoSQL não tem esquema&quot;. O MongoDB tem transação multi-documento desde a versão 4.0 e permite validação de esquema por coleção. A generalização é falsa para praticamente qualquer afirmação.</p></div>
 </div>
 <div class="conceito">
-<h4>A taxonomia: cinco famílias, dois representantes</h4>
-<p>Chave-valor (Redis, DynamoDB) guarda um valor opaco sob uma chave e não sabe nada sobre o conteúdo. Documento (MongoDB, CouchDB) guarda estruturas aninhadas e sabe consultar campos dentro delas. Coluna larga (Cassandra, HBase) organiza por família de colunas e otimiza escrita em volume. Grafo (Neo4j) trata a relação como cidadã de primeira classe. Motor de busca (Elasticsearch, Solr) inverte o problema: em vez de ir do documento ao conteúdo, vai do termo aos documentos. Os dois laboratórios cobriram justamente as duas famílias mais usadas juntas.</p>
-<div class="caixa analogia"><span class="rotulo">Analogia</span><p>Chave-valor é o guarda-volumes: você entrega uma mala, recebe uma ficha, e ninguém olha dentro. Documento é o arquivo de pastas: cada pasta tem estrutura própria e dá para procurar por um campo específico. Motor de busca é o índice remissivo no fim do livro: ele não guarda o texto, guarda em que páginas cada palavra aparece.</p></div>
+<h4>A taxonomia: cinco famílias, três representantes</h4>
+<p>Chave-valor (DynamoDB, Memcached) guarda um valor sob uma chave, em geral sem saber o que há dentro. Documento (MongoDB, CouchDB) guarda estruturas aninhadas e sabe consultar campos dentro delas. Coluna larga (Cassandra, HBase) organiza por família de colunas e otimiza escrita em volume. Grafo (Neo4j) trata a relação como cidadã de primeira classe. Motor de busca (Elasticsearch, Solr) inverte o problema: em vez de ir do documento ao conteúdo, vai do termo aos documentos. O Redis costuma ser classificado como chave-valor, mas a rigor escapa da caixa: o valor não é opaco, é uma estrutura que o servidor sabe manipular — daí o nome que ele próprio usa, data structure server. Os três laboratórios cobriram documento, motor de busca e chave-valor, justamente as famílias que mais aparecem juntas num mesmo sistema.</p>
+<div class="caixa analogia"><span class="rotulo">Analogia</span><p>Chave-valor clássico é o guarda-volumes: você entrega uma mala, recebe uma ficha, e ninguém olha dentro. Documento é o arquivo de pastas: cada pasta tem estrutura própria e dá para procurar por um campo específico. Motor de busca é o índice remissivo no fim do livro: não guarda o texto, guarda em que páginas cada palavra aparece. E o Redis é a mesa de trabalho: o que está ao alcance da mão agora, já organizado na forma em que vai ser usado.</p></div>
 </div>
 <div class="conceito">
 <h4>ACID e BASE</h4>
@@ -204,7 +208,7 @@ tr:nth-child(even) td { background: #fcfcfc; }
 </div>
 <div class="conceito">
 <h4>A tese desta aula</h4>
-<p>Os dois laboratórios não foram exercícios independentes. O Lab 2 montou, sem anunciar, uma arquitetura de produção clássica: o MongoDB do Lab 1 emitindo logs, o Logstash recebendo, o Elasticsearch indexando, o Kibana exibindo. Essa é a divisão de trabalho real: um sistema guarda a verdade com garantia de escrita; o outro constrói um índice derivado, otimizado para uma pergunta que o primeiro responde mal. Toda a aula vai voltar a esse ponto.</p>
+<p>Os laboratórios não foram exercícios independentes. O Lab 2 montou, sem anunciar, uma arquitetura de produção clássica: o MongoDB do Lab 1 emitindo logs, o Logstash recebendo, o Elasticsearch indexando, o Kibana exibindo. O Lab 3 trouxe a terceira peça. A divisão de trabalho é esta: um sistema guarda a verdade com garantia de escrita; outro constrói um índice derivado, otimizado para uma pergunta que o primeiro responde mal; o terceiro mantém em memória o estado que precisa ser lido em microssegundos e que pode ser perdido sem tragédia. Toda a aula volta a esse ponto.</p>
 <div class="caixa analogia"><span class="rotulo">Analogia</span><p>Uma biblioteca tem o acervo e tem o catálogo. O acervo é a verdade: se o catálogo sumir, reconstrói-se a partir dos livros. Se o acervo sumir, o catálogo vira uma lista de coisas que não existem mais. O Elasticsearch é o catálogo.</p></div>
 </div>
 <h3>Na pr&aacute;tica</h3>
@@ -822,22 +826,399 @@ Capital do Brasil            1.99875  0.99924        0.998748    0.999374</pre>
 <li>Se o chunk pequeno perde contexto e o grande dilui significado, como você decidiria o tamanho?</li>
 </ol></div>
 </section>
-<section class="modulo" style="--cor:#5b4a8a">
+<section class="modulo" style="--cor:#A4231C">
 <div class="modulo-head">
-<span class="num">M&oacute;dulo 8</span><span class="dur">30 minutos</span>
+<span class="num">M&oacute;dulo 8</span><span class="dur">45 minutos</span>
 </div>
-<h2>Os dois juntos: sistema de registro e camada de busca</h2>
-<div class="abertura">Os dois laboratórios pareciam exercícios separados. Não eram: juntos, eles montaram uma arquitetura que aparece em quase todo sistema de porte — e que responde à pergunta de quando usar cada banco com um &quot;os dois, em papéis diferentes&quot;.</div>
+<h2>Redis: o servidor de estruturas de dados</h2>
+<div class="abertura">Chamar o Redis de &quot;banco chave-valor&quot; é verdade e é insuficiente. A chave aponta para um valor, sim — mas esse valor é uma estrutura que o servidor sabe manipular. A diferença entre guardar um JSON e guardar um hash é a diferença entre trazer o dado para a aplicação e mandar a operação até o dado.</div>
 <h3>Objetivos de aprendizagem</h3><ul>
-<li>Descrever o fluxo MongoDB → GELF → Logstash → Elasticsearch → Kibana e o papel de cada peça.</li>
-<li>Explicar por que o acoplamento entre os dois sistemas é unidirecional e o que isso garante.</li>
-<li>Avaliar a escolha de UDP para transporte de log, com suas vantagens e o que ela sacrifica.</li>
-<li>Aplicar o critério de decisão entre os dois sistemas a requisitos concretos.</li>
+<li>Explicar por que o Redis é um servidor de estruturas de dados e não apenas um cache de strings.</li>
+<li>Prever o resultado de um comando aplicado a uma chave do tipo errado.</li>
+<li>Escolher entre string, hash, list, set e sorted set a partir da operação pretendida.</li>
+<li>Usar TTL corretamente, distinguindo os três estados que o comando reporta.</li>
+<li>Combinar corretamente as pontas de inserção e consumo de uma list para obter FIFO ou LIFO.</li>
 </ul>
 <h3>Conceitos</h3>
 <div class="conceito">
-<h4>O fluxo, peça por peça</h4>
-<p>O MongoDB escreve log na saída padrão, como qualquer processo. O driver de log GELF do Docker intercepta essa saída e a envia por UDP para a porta 12201. O Logstash escuta ali, aplica o pipeline configurado e escreve no Elasticsearch, num índice nomeado por data. O Kibana lê o Elasticsearch e apresenta. Nenhuma dessas peças conhece as outras além da vizinha imediata: trocar o Elasticsearch por outro destino exigiria mudar apenas o output do Logstash.</p>
+<h4>Data structure server: a operação vai até o dado</h4>
+<p>Num cache comum, incrementar um contador exige ler o valor, somar na aplicação e gravar de volta — três passos, duas viagens de rede e uma janela em que dois clientes podem ler o mesmo valor e gravar por cima um do outro. No Redis isso é um <code>INCR</code>, executado dentro do servidor, de forma atômica. O mesmo vale para acrescentar a uma lista, somar um ponto num ranking ou incrementar um campo de hash. É por isso que a estrutura importa: ela define que operações podem ser empurradas para o servidor.</p>
+<div class="caixa analogia"><span class="rotulo">Analogia</span><p>A diferença entre pedir o extrato inteiro ao banco para calcular seu saldo em casa e pedir ao banco o saldo. No segundo caso a conta é feita onde o dado mora.</p></div>
+</div>
+<div class="conceito">
+<h4>A chave é tipada, e o tipo não se converte</h4>
+<p>Toda chave no Redis carrega um tipo, definido no momento em que ela nasce. Um comando de outro tipo sobre ela é recusado com <code>WRONGTYPE</code>, sem conversão e sem sobrescrita. A exceção é o <code>SET</code>, que substitui a chave inteira, qualquer que fosse o tipo anterior — o que engana, porque dá a impressão de que o Redis é permissivo com tipos quando na verdade é estrito.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Reaproveitar um nome de chave para outra estrutura. Se <code>user:1001</code> já existe como string, um <code>HSET user:1001</code> falha — e falha em tempo de execução, no ambiente onde a chave antiga existir, não no ambiente limpo onde o código foi testado.</p></div>
+</div>
+<div class="conceito">
+<h4>Strings guardam bytes, não caracteres</h4>
+<p>A string do Redis é uma sequência de bytes, e comandos como <code>STRLEN</code>, <code>APPEND</code> e <code>GETRANGE</code> operam em bytes. Em texto ASCII byte e caractere coincidem e a distinção passa despercebida; em português, não. Isso também significa que uma string do Redis pode guardar qualquer coisa — JSON, um protobuf, uma imagem — até 512 MB.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Usar <code>GETRANGE</code> para cortar texto com acento e partir um caractere ao meio, produzindo bytes inválidos em UTF-8.</p></div>
+</div>
+<div class="conceito">
+<h4>TTL tem três respostas, não duas</h4>
+<p>O <code>TTL</code> devolve o número de segundos restantes quando há expiração, <strong>-1</strong> quando a chave existe mas é permanente, e <strong>-2</strong> quando a chave não existe. Tratar -1 e -2 como o mesmo &quot;sem TTL&quot; apaga a distinção entre &quot;está no cache para sempre&quot; e &quot;não está no cache&quot; — que são situações opostas. Outro ponto decisivo: escrever numa chave com <code>INCR</code> ou <code>APPEND</code> <strong>não renova</strong> o TTL, enquanto um <code>SET</code> sem cláusula de expiração o remove por completo.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Atualizar uma sessão com <code>SET</code> sem repetir o <code>EX</code>. O TTL é descartado e a sessão passa a viver para sempre — um vazamento de memória que só aparece semanas depois.</p></div>
+</div>
+<div class="conceito">
+<h4>Hash: atualização parcial sem serializar</h4>
+<p>Guardar uma entidade como string JSON obriga a ler o documento inteiro, alterar na aplicação e regravar para mudar um campo — três operações e uma condição de corrida entre a leitura e a escrita. O hash resolve isso: cada campo é lido e escrito isoladamente, e o <code>HINCRBY</code> incrementa um campo numérico atomicamente. O custo é perder a capacidade de guardar estrutura aninhada, já que os valores do hash são escalares.</p>
+<div class="caixa analogia"><span class="rotulo">Analogia</span><p>JSON numa string é um formulário plastificado: para mudar um campo, imprime-se outro inteiro. O hash é o formulário com campos editáveis.</p></div>
+</div>
+<div class="conceito">
+<h4>List: a ponta de entrada decide a semântica</h4>
+<p>A list é uma lista duplamente ligada com inserção e remoção nas duas pontas. Não existe &quot;list FIFO&quot; ou &quot;list LIFO&quot; — o comportamento nasce da combinação escolhida. <code>LPUSH</code> com <code>RPOP</code> (ou <code>RPUSH</code> com <code>LPOP</code>) dá FIFO, uma fila: quem entra primeiro sai primeiro. Empurrar e consumir pela mesma ponta dá LIFO, uma pilha. O <code>LRANGE</code> apenas lê, sem consumir.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Usar <code>RPUSH</code> para enfileirar e <code>RPOP</code> para consumir. É o erro mais comum com listas: o código parece uma fila, roda sem erro, e processa os trabalhos na ordem inversa. Com carga baixa ninguém nota; sob fila cheia, os itens mais antigos nunca são processados.</p></div>
+</div>
+<div class="conceito">
+<h4>Set: unicidade como resposta, não só como propriedade</h4>
+<p>O set garante elementos únicos, mas o detalhe útil é que o <code>SADD</code> devolve quantos membros <strong>realmente entraram</strong>. Um retorno 0 significa &quot;já estava lá&quot;. Isso transforma o set num teste de duplicidade atômico: registrar um voto, um clique ou o processamento de uma mensagem e saber, na mesma operação, se aquilo já havia acontecido. Os comandos de conjunto — <code>SINTER</code>, <code>SUNION</code>, <code>SDIFF</code> — rodam no servidor.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Supor que <code>SDIFF</code> é comutativo. <code>SDIFF A B</code> devolve o que está em A e não em B; trocar a ordem dá outro resultado.</p></div>
+</div>
+<div class="conceito">
+<h4>Sorted set: ordenação mantida a cada escrita</h4>
+<p>O sorted set associa um score numérico a cada membro e mantém a ordem continuamente, com custo logarítmico por operação. Ele responde tanto &quot;quais são os cinco primeiros&quot; quanto &quot;em que posição está o jogador X&quot; sem varrer a estrutura — a segunda pergunta é a que nenhuma outra estrutura responde bem. Empates em score são desempatados pelo membro, em ordem lexicográfica.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Assumir que o desempate aparece igual nos dois sentidos. Como o <code>ZREVRANGE</code> percorre a estrutura ao contrário, o empate também sai invertido — detalhe que aparece quando dois competidores têm a mesma pontuação e a ordem exibida surpreende.</p></div>
+</div>
+<h3>Na pr&aacute;tica</h3>
+<div class="demo">
+<h4>A chave é tipada — e o roteiro do laboratório tropeça nisso</h4>
+<pre class="codigo"># Seção 5.1 do lab criou user:1001 como string:
+SET user:1001 &quot;João&quot;
+APPEND user:1001 &quot; Silva&quot;
+
+# Seção 20 tenta usar a MESMA chave como hash:
+HSET user:1001 nome &quot;João&quot; idade 40 cidade &quot;Brasília&quot;</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">WRONGTYPE Operation against a key holding the wrong kind of value
+
+TYPE user:1001  -&gt;  string
+GET  user:1001  -&gt;  &quot;João Silva&quot;</pre>
+<p class="explica">O exercício integrador do roteiro não roda como está: a chave já existe com outro tipo. O diagnóstico é imediato com <code>TYPE</code>. A correção é remover a chave ou — melhor — não reaproveitar o nome, usando <code>user:nome:1001</code> para a string e <code>user:1001</code> para o hash.</p>
+<p class="fonte">Lab 3, PARTE2-EVIDENCIAS.md, Seção 20</p>
+</div>
+<div class="demo">
+<h4>STRLEN conta bytes</h4>
+<pre class="codigo">SET user:1001 &quot;João&quot;
+APPEND user:1001 &quot; Silva&quot;
+STRLEN user:1001</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">SET     -&gt; OK
+APPEND  -&gt; 11
+STRLEN  -&gt; 11</pre>
+<p class="explica">&quot;João Silva&quot; tem 10 caracteres, mas 11 bytes: o &quot;ã&quot; ocupa 2 em UTF-8. O <code>APPEND</code> também devolve o comprimento em bytes. Em qualquer operação de recorte, é o byte que conta.</p>
+<p class="fonte">Lab 3, PARTE1-EVIDENCIAS.md, Seção 5.1</p>
+</div>
+<div class="demo">
+<h4>Os três estados do TTL</h4>
+<pre class="codigo">SET cache:home &quot;html-home&quot;
+TTL cache:home          # existe, sem expiração
+EXPIRE cache:home 30
+TTL cache:home          # existe, com expiração
+PERSIST cache:home
+TTL cache:home          # voltou a ser permanente
+DEL cache:home
+TTL cache:home          # não existe mais</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">-1
+30
+-1
+-2</pre>
+<p class="explica">Três situações, três respostas. O <code>PERSIST</code> remove a expiração e devolve a chave ao estado permanente. Uma camada de cache que trate -1 e -2 como iguais confunde &quot;guardado para sempre&quot; com &quot;não guardado&quot;.</p>
+<p class="fonte">Lab 3, PARTE1-EVIDENCIAS.md, Seções 4.1 e 4.5</p>
+</div>
+<div class="demo">
+<h4>O erro clássico da list: a fila que anda ao contrário</h4>
+<pre class="codigo">RPUSH fila:etl &quot;job:extrair&quot; &quot;job:transformar&quot; &quot;job:validar&quot; \
+               &quot;job:carregar&quot; &quot;job:notificar&quot;
+RPOP fila:etl
+RPOP fila:etl
+LRANGE fila:etl 0 -1</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">RPOP   -&gt; &quot;job:notificar&quot;
+RPOP   -&gt; &quot;job:carregar&quot;
+LRANGE -&gt; &quot;job:extrair&quot;, &quot;job:transformar&quot;, &quot;job:validar&quot;</pre>
+<p class="explica">Enfileirou pela direita e consumiu pela direita: saíram os dois <strong>últimos</strong>, não os dois primeiros. O código não dá erro, a fila funciona, e os trabalhos mais antigos vão sendo empurrados para o fim da vida. Com <code>RPUSH</code> o consumo correto é <code>LPOP</code>.</p>
+<p class="fonte">Lab 3, PARTE1-EVIDENCIAS.md, Exercício 5</p>
+</div>
+<div class="demo">
+<h4>Empate em sorted set aparece invertido no ZREVRANGE</h4>
+<pre class="codigo">ZADD t:empate 8 &quot;Bruno&quot; 8 &quot;Carlos&quot; 8 &quot;Ana&quot;
+ZRANGE    t:empate 0 -1 WITHSCORES
+ZREVRANGE t:empate 0 -1 WITHSCORES</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">ZRANGE    -&gt; Ana 8, Bruno 8, Carlos 8
+ZREVRANGE -&gt; Carlos 8, Bruno 8, Ana 8</pre>
+<p class="explica">Com scores iguais, o desempate é lexicográfico pelo membro. Como o <code>ZREVRANGE</code> percorre ao contrário, o empate também inverte. Num ranking de verdade isso significa que, entre empatados, quem tem nome mais ao fim do alfabeto aparece na frente — critério arbitrário que convém substituir por um score composto, por exemplo somando um desempate temporal.</p>
+<p class="fonte">Lab 3, verificação isolada durante a execução</p>
+</div>
+<div class="fechamento"><span class="rotulo">Fechamento</span><p>O Redis não substitui os dois sistemas anteriores: ele responde a uma terceira pergunta, que é &quot;qual o estado agora, no menor tempo possível&quot;. Escolher a estrutura certa é quase toda a decisão de projeto — e o preço de escolher errado aparece como comportamento estranho, não como erro. O próximo módulo mostra como essas estruturas viram padrões de aplicação.</p></div>
+<div class="perguntas"><h3>Para discutir em sala</h3><ol>
+<li>Por que o SET aceita sobrescrever uma chave de qualquer tipo, mas o HSET não?</li>
+<li>Sua sessão tem TTL de 30 minutos e é atualizada a cada requisição com SET. O que acontece com a expiração?</li>
+<li>Você precisa saber se um e-mail já foi enviado para um usuário hoje. Que estrutura usa, e por quê?</li>
+<li>Um ranking tem dois jogadores com 1500 pontos. Que critério o Redis usa para ordená-los, e isso é aceitável no seu caso?</li>
+</ol></div>
+</section>
+<section class="modulo" style="--cor:#A4231C">
+<div class="modulo-head">
+<span class="num">M&oacute;dulo 9</span><span class="dur">40 minutos</span>
+</div>
+<h2>Redis: padrões de aplicação e atomicidade</h2>
+<div class="abertura">Cache, sessão, contador, rate limit, fila e ranking são seis problemas diferentes que o Redis resolve com as mesmas estruturas do módulo anterior. O que muda é a combinação — e, em dois deles, a diferença entre funcionar e falhar está na atomicidade.</div>
+<h3>Objetivos de aprendizagem</h3><ul>
+<li>Implementar cache, sessão, contador, rate limit, fila e ranking com a estrutura adequada a cada um.</li>
+<li>Identificar a janela de falha do rate limit implementado com dois comandos separados.</li>
+<li>Explicar o que MULTI/EXEC garante e o que ele não garante.</li>
+<li>Justificar quando um script Lua é necessário em vez de uma transação.</li>
+</ul>
+<h3>Conceitos</h3>
+<div class="conceito">
+<h4>Cache e sessão: o TTL substitui a rotina de limpeza</h4>
+<p>Cache de página, sessão de usuário e token são todos o mesmo padrão: uma string com prazo. O ganho não é só de desempenho — é operacional. Sem TTL, alguém precisa escrever e manter um processo que varre o armazenamento apagando o que venceu; com TTL, o próprio Redis remove. Usar <code>SET ... EX</code> ou <code>SETEX</code> em vez de <code>SET</code> seguido de <code>EXPIRE</code> importa porque garante que não existe instante em que a chave esteja gravada sem prazo.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Guardar no cache o resultado de uma consulta que pode ser inválida antes do TTL vencer. TTL controla idade, não correção: se o dado de origem mudar, o cache continua servindo o valor velho até expirar. Quando isso não é aceitável, é preciso invalidar explicitamente com <code>DEL</code> no momento da escrita.</p></div>
+</div>
+<div class="conceito">
+<h4>Contador: a razão de existir o INCR</h4>
+<p>Ler, somar e gravar é a implementação intuitiva de um contador e está errada sob concorrência: dois clientes leem 10, ambos gravam 11, e uma contagem se perde. O <code>INCR</code> executa a leitura e a escrita como uma operação indivisível dentro do servidor. Nenhum cliente consegue se intercalar. É o exemplo mais simples do princípio que organiza todo este módulo: empurrar a operação para onde o dado está elimina a corrida.</p>
+<div class="caixa analogia"><span class="rotulo">Analogia</span><p>É a diferença entre dois caixas anotando o total num papel compartilhado e uma catraca que conta sozinha. A catraca não erra porque não há intervalo entre ler e escrever.</p></div>
+</div>
+<div class="conceito">
+<h4>Rate limit: a janela de falha que a Seção 10.3 não conta</h4>
+<p>O padrão do roteiro é <code>INCR</code> seguido de <code>EXPIRE</code>: na primeira requisição o contador vai a 1 e ganha prazo de 60 segundos; nas seguintes apenas incrementa, e o TTL não é renovado, de modo que a janela conta a partir do primeiro acesso. Correto em regime normal. O problema está entre os dois comandos: se o processo da aplicação morrer ali, a chave fica sem TTL. Como o <code>INCR</code> nunca expira nada, aquele contador fica eterno — e o usuário passa a ser bloqueado para sempre, sem que nada no sistema indique a causa.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Considerar o cenário improvável demais para tratar. Ele é raro por requisição e inevitável em escala: a um milhão de requisições por dia, uma janela de microssegundos acontece.</p></div>
+</div>
+<div class="conceito">
+<h4>MULTI/EXEC: enfileira, isola, mas não desfaz</h4>
+<p>Entre o <code>MULTI</code> e o <code>EXEC</code>, os comandos não são executados — são enfileirados, cada um respondendo <code>QUEUED</code>. O <code>EXEC</code> dispara todos em sequência, sem que nenhum comando de outro cliente se intercale. Isso dá isolamento e atomicidade de execução. O que <strong>não</strong> dá é rollback: se um comando falhar em tempo de execução, os demais são aplicados assim mesmo e não há como voltar atrás. Erros de sintaxe são diferentes — esses são detectados no enfileiramento e abortam a transação inteira.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Tratar MULTI/EXEC como o BEGIN/COMMIT de um banco relacional e presumir que um erro no meio desfaz o resto. Não desfaz, e o estado fica parcialmente aplicado.</p></div>
+</div>
+<div class="conceito">
+<h4>A transação é uma propriedade da conexão</h4>
+<p>O <code>MULTI</code> abre um contexto naquela conexão específica. Enviar <code>MULTI</code> por uma conexão e <code>EXEC</code> por outra não forma transação alguma: o <code>EXEC</code> falha com <code>ERR EXEC without MULTI</code> e os comandos do meio já executaram soltos. Numa aplicação com pool de conexões, isso acontece sem que ninguém escreva nada de errado — basta o pool entregar conexões diferentes a cada chamada.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Emitir os comandos de uma transação por meio de uma camada de abstração que não garante a mesma conexão. A biblioteca cliente precisa expor explicitamente o conceito de transação ou de conexão reservada.</p></div>
+</div>
+<div class="conceito">
+<h4>Lua: quando a lógica precisa decidir no meio</h4>
+<p>Um script Lua roda inteiro no servidor como unidade indivisível, e pode <strong>ramificar</strong>: ler um valor, decidir e escrever conforme o resultado. É exatamente o que o MULTI/EXEC não consegue, porque ele enfileira sem executar e portanto não tem acesso a nenhum resultado intermediário. O rate limit correto é essa ramificação: incrementa, e <strong>se</strong> for a primeira requisição da janela, define a expiração.</p>
+<div class="caixa analogia"><span class="rotulo">Analogia</span><p>MULTI/EXEC é entregar uma lista pronta de compras; o script Lua é mandar alguém ao mercado com autorização para decidir na hora.</p></div>
+</div>
+<h3>Na pr&aacute;tica</h3>
+<div class="demo">
+<h4>Rate limit: dois comandos contra um script</h4>
+<pre class="codigo"># Seção 10.3 — dois comandos, com janela de falha entre eles
+INCR rl:user:42
+EXPIRE rl:user:42 60
+
+# Seção 18 — um script, atômico
+EVAL &quot;local v = redis.call(&#x27;INCR&#x27;, KEYS[1])
+      if v == 1 then redis.call(&#x27;EXPIRE&#x27;, KEYS[1], ARGV[1]) end
+      return v&quot; 1 rl:ip:192.168.0.10 60</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">chamadas sucessivas do script -&gt; 1, 2, 3
+TTL rl:ip:192.168.0.10        -&gt; 60  (definido só na primeira)</pre>
+<p class="explica">O contador sobe a cada chamada; o <code>EXPIRE</code> só roda quando v == 1. O TTL não é renovado depois, então a janela conta do primeiro acesso. A diferença para a versão de dois comandos não é a viagem de rede economizada — é que desaparece o estado em que a chave existe sem prazo.</p>
+<p class="fonte">Lab 3, PARTE1 Seção 10.3 e PARTE2 Seção 18</p>
+</div>
+<div class="demo">
+<h4>MULTI/EXEC não faz rollback</h4>
+<pre class="codigo">SET nao:e:numero &quot;texto&quot;
+
+MULTI
+INCR nao:e:numero              # vai falhar: não é número
+SET  marcador:pos:erro &quot;fui gravado&quot;
+EXEC
+
+GET marcador:pos:erro</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">MULTI  -&gt; OK
+INCR   -&gt; QUEUED
+SET    -&gt; QUEUED
+EXEC   -&gt; 1) ERR value is not an integer or out of range
+          2) OK
+
+GET marcador:pos:erro -&gt; &quot;fui gravado&quot;</pre>
+<p class="explica">O <code>INCR</code> falhou dentro do <code>EXEC</code> e o <code>SET</code> seguinte foi aplicado. O estado ficou parcial. Em um banco relacional o erro abortaria a transação inteira; aqui, o <code>EXEC</code> devolve um array em que cada posição pode ser um resultado ou um erro, e cabe à aplicação inspecionar.</p>
+<p class="fonte">Lab 3, PARTE2-EVIDENCIAS.md, Seção 17</p>
+</div>
+<div class="demo">
+<h4>A mesma transação, em conexões diferentes</h4>
+<pre class="codigo"># cada linha enviada por uma conexão distinta
+MULTI
+INCR pedidos:contador
+EXEC</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">MULTI -&gt; OK
+INCR  -&gt; 5        (executou solto, fora de transação)
+EXEC  -&gt; ERR EXEC without MULTI</pre>
+<p class="explica">O <code>MULTI</code> morreu junto com sua conexão. O <code>INCR</code> não foi enfileirado: executou na hora e alterou o estado. O <code>EXEC</code> chegou a uma conexão que nunca abriu transação. Nenhum desses três comandos está errado isoladamente — o erro é de infraestrutura, e é por isso que ele escapa em revisão de código.</p>
+<p class="fonte">Lab 3, PARTE2-EVIDENCIAS.md, Seção 17</p>
+</div>
+<div class="fechamento"><span class="rotulo">Fechamento</span><p>Os padrões deste módulo cobrem a maior parte do uso real do Redis. O fio que os liga é a atomicidade: sempre que uma operação lógica precisa de mais de um passo, é preciso decidir conscientemente se o passo intermediário pode ser observado ou interrompido. O próximo módulo sai do chave-valor e mostra o que mais cabe num servidor de estruturas.</p></div>
+<div class="perguntas"><h3>Para discutir em sala</h3><ol>
+<li>Por que SETEX é preferível a SET seguido de EXPIRE, se o resultado final é o mesmo?</li>
+<li>Seu rate limit usa INCR + EXPIRE há dois anos sem problema. Isso prova que a janela de falha não existe?</li>
+<li>Quando MULTI/EXEC não serve e só um script Lua resolve?</li>
+<li>Um usuário reclama que está bloqueado há dias pelo rate limit. Como você investiga?</li>
+</ol></div>
+</section>
+<section class="modulo" style="--cor:#A4231C">
+<div class="modulo-head">
+<span class="num">M&oacute;dulo 10</span><span class="dur">40 minutos</span>
+</div>
+<h2>Redis além do chave-valor: probabilísticos, streams e durabilidade</h2>
+<div class="abertura">Bitmap, HyperLogLog e geoespacial parecem recursos exóticos até se perceber o que têm em comum: cada um troca uma garantia por ordens de grandeza de memória. E as Streams resolvem o problema que o Pub/Sub deixa em aberto desde que foi apresentado.</div>
+<h3>Objetivos de aprendizagem</h3><ul>
+<li>Estimar o custo de memória de um bitmap e de um HyperLogLog e dizer o que cada um perde.</li>
+<li>Reconhecer que os comandos geoespaciais são um sorted set com outra interface.</li>
+<li>Escolher entre Pub/Sub e Streams a partir da garantia de entrega exigida.</li>
+<li>Comparar RDB e AOF e prever o que sobrevive a um reinício.</li>
+<li>Relacionar política de eviction com a presença ou ausência de TTL nas chaves.</li>
+</ul>
+<h3>Conceitos</h3>
+<div class="conceito">
+<h4>Bitmap: um bit por entidade</h4>
+<p>O bitmap não é um tipo próprio — é uma string manipulada bit a bit por <code>SETBIT</code>, <code>GETBIT</code> e <code>BITCOUNT</code>. Usando o identificador do usuário como índice do bit, representa-se um atributo booleano de toda a base num espaço minúsculo: presença no dia, usuário ativo, participação numa campanha. O tamanho é determinado pelo maior índice usado, e bits nunca escritos valem 0 sem erro.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Esquecer que o <code>SETBIT</code> devolve o valor <strong>anterior</strong> do bit, não o novo. Quem lê o retorno como confirmação interpreta 0 como falha.</p></div>
+</div>
+<div class="conceito">
+<h4>HyperLogLog: cardinalidade sem guardar os elementos</h4>
+<p>O HyperLogLog responde &quot;quantos distintos&quot; com erro em torno de 0,81% e memória limitada a cerca de 12 KB, independentemente de conter três ou trezentos milhões de valores. Ele não guarda os elementos — guarda um resumo estatístico. Por isso não é possível perguntar se um usuário específico está lá, nem fazer interseção entre dois HLLs. O que é possível, e muito útil, é o <code>PFMERGE</code>: unir contadores diários para obter os únicos da semana, algo que somar as contagens diárias jamais daria certo, porque contaria repetido quem voltou.</p>
+<div class="caixa analogia"><span class="rotulo">Analogia</span><p>É a diferença entre a lista de presença e o contador da catraca. A lista diz quem entrou; a catraca diz quantos, ocupa quase nada e não permite conferir um nome.</p></div>
+</div>
+<div class="conceito">
+<h4>Geoespacial é um sorted set disfarçado</h4>
+<p>Os comandos <code>GEOADD</code>, <code>GEODIST</code> e <code>GEOSEARCH</code> não criam um tipo novo. A coordenada é convertida num geohash de 52 bits que vira o score de um sorted set comum — e é a ordenação desse score que torna a busca por proximidade eficiente, porque pontos geograficamente próximos recebem geohashes numericamente próximos. Dá para confirmar rodando <code>TYPE</code> sobre a chave: o resultado é <code>zset</code>.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Inverter longitude e latitude no <code>GEOADD</code>. A ordem é longitude primeiro, ao contrário de como se costuma escrever coordenadas. O Redis aceita sem reclamar e o ponto vai parar em outro continente.</p></div>
+</div>
+<div class="conceito">
+<h4>Pub/Sub entrega a quem está ouvindo; Stream guarda</h4>
+<p>O <code>PUBLISH</code> devolve quantos assinantes receberam a mensagem. Se for zero, a mensagem simplesmente deixou de existir — não há fila, buffer ou repetição. A Stream é o oposto: um log append-only, com ID crescente por evento, que permite reler o histórico a qualquer momento. Com consumer groups, cada mensagem entregue fica <strong>pendente</strong> até ser confirmada com <code>XACK</code>; se o consumidor morrer antes de confirmar, a mensagem continua na lista de pendências e outro consumidor pode assumi-la.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Usar Pub/Sub para algo que não pode ser perdido — disparo de e-mail, baixa de estoque, notificação de pagamento. Funciona em teste, com o consumidor ligado, e perde mensagens em produção toda vez que o consumidor reinicia.</p></div>
+</div>
+<div class="conceito">
+<h4>RDB e AOF respondem a perguntas diferentes</h4>
+<p>O RDB grava snapshots binários do dataset inteiro em intervalos configurados: arquivo compacto, recuperação rápida, e perda de tudo que foi escrito desde o último snapshot. O AOF registra cada comando de escrita num log: arquivo maior, recuperação mais lenta porque reexecuta o log, e perda limitada a cerca de um segundo com <code>appendfsync everysec</code>. Não são excludentes — é comum manter os dois, o RDB como backup para copiar e o AOF como garantia de durabilidade.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Supor que o Redis persiste por padrão na imagem oficial. O AOF vem desligado; sem habilitá-lo, a durabilidade depende apenas dos snapshots RDB.</p></div>
+</div>
+<div class="conceito">
+<h4>CONFIG SET aplica agora e esquece depois</h4>
+<p>O <code>CONFIG SET</code> altera a configuração do processo em execução, imediatamente. Ele não escreve no arquivo de configuração: ao reiniciar, tudo volta ao que estava declarado no <code>redis.conf</code> ou nos argumentos de inicialização. Isso é ótimo para experimentar e péssimo como forma de configurar em definitivo.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Resolver um incidente ajustando <code>maxmemory</code> com <code>CONFIG SET</code>, não registrar a mudança na configuração persistente, e ver o mesmo incidente voltar no próximo reinício — meses depois, quando ninguém lembra do ajuste.</p></div>
+</div>
+<div class="conceito">
+<h4>Eviction: o que o Redis faz quando a memória acaba</h4>
+<p>Atingido o <code>maxmemory</code>, a política decide o destino. <code>noeviction</code>, o padrão, recusa novas escritas com erro e mantém as leituras — seguro para dado que não pode sumir, catastrófico para um cache, que para de aceitar itens. <code>allkeys-lru</code> descarta as chaves usadas há mais tempo, com ou sem TTL. <code>volatile-lru</code> faz o mesmo apenas entre as chaves que têm TTL, protegendo o que é permanente. A escolha depende de a instância ser cache puro ou misturar cache e dado durável.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Usar <code>allkeys-lru</code> numa instância que mistura cache e dado permanente. O Redis descartará o dado permanente sem qualquer aviso quando a memória apertar.</p></div>
+</div>
+<h3>Na pr&aacute;tica</h3>
+<div class="demo">
+<h4>Bitmap: 1.004 usuários em 126 bytes</h4>
+<pre class="codigo">SETBIT presenca:2026-03-15 1001 1
+SETBIT presenca:2026-03-15 1002 1
+SETBIT presenca:2026-03-15 1003 0
+BITCOUNT presenca:2026-03-15
+STRLEN   presenca:2026-03-15
+GETBIT   presenca:2026-03-15 9999</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">SETBIT   -&gt; 0, 0, 0    (valor anterior de cada bit)
+BITCOUNT -&gt; 2
+STRLEN   -&gt; 126
+GETBIT   -&gt; 0</pre>
+<p class="explica">O bit de índice 1003 força a string a ter ceil(1004/8) = 126 bytes, e nesse espaço cabem 1.008 flags. Uma lista dos IDs presentes custaria vários bytes por usuário. O bit de índice 9999, nunca escrito, devolve 0 sem erro — o bitmap só aloca até o maior índice usado.</p>
+<p class="fonte">Lab 3, PARTE2-EVIDENCIAS.md, Seção 13</p>
+</div>
+<div class="demo">
+<h4>HyperLogLog: unindo janelas de tempo</h4>
+<pre class="codigo">PFADD hll:dia1 &quot;u1&quot; &quot;u2&quot; &quot;u3&quot;
+PFADD hll:dia2 &quot;u3&quot; &quot;u4&quot; &quot;u5&quot;
+PFMERGE hll:total hll:dia1 hll:dia2
+PFCOUNT hll:total
+STRLEN  hll:total</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">PFCOUNT -&gt; 5
+STRLEN  -&gt; 31</pre>
+<p class="explica">Seis inserções, cinco únicos — u3 aparece nos dois dias e conta uma vez. Somar as contagens diárias daria 6, errado. Com poucos elementos o Redis usa codificação esparsa e o contador ocupa 31 bytes; ele cresce até um teto de cerca de 12 KB e para de crescer, não importa quantos milhões de valores distintos entrem depois.</p>
+<p class="fonte">Lab 3, PARTE2-EVIDENCIAS.md, Seção 14</p>
+</div>
+<div class="demo">
+<h4>Geo é zset: a prova</h4>
+<pre class="codigo">GEOADD cidades:df -47.8825 -15.7942 &quot;Brasilia&quot;
+GEOADD cidades:df -48.0770 -15.6014 &quot;Taguatinga&quot;
+GEODIST cidades:df &quot;Brasilia&quot; &quot;Taguatinga&quot; km
+GEOSEARCH cidades:df FROMLONLAT -47.8825 -15.7942 BYRADIUS 10 km WITHDIST
+
+TYPE   cidades:df
+ZSCORE cidades:df &quot;Brasilia&quot;</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">GEODIST   -&gt; 29.8936
+GEOSEARCH -&gt; Brasilia 0.0003, LagoSul 5.2386   (Taguatinga ficou fora do raio)
+TYPE      -&gt; zset
+ZSCORE    -&gt; 965555706610042</pre>
+<p class="explica">Quase 30 km entre Brasília e Taguatinga, e com raio de 10 km Taguatinga sai do resultado. O <code>TYPE</code> revela o que há por baixo: um sorted set cujo score é o geohash de 52 bits da coordenada. Todo comando GEO é açúcar sintático sobre operações de zset.</p>
+<p class="fonte">Lab 3, PARTE2-EVIDENCIAS.md, Seção 15</p>
+</div>
+<div class="demo">
+<h4>Stream: a mensagem fica pendente até ser confirmada</h4>
+<pre class="codigo">XGROUP CREATE stream:pedidos grupo:processadores 0 MKSTREAM
+XREADGROUP GROUP grupo:processadores consumidor:1 COUNT 10 \
+           STREAMS stream:pedidos &gt;
+XPENDING stream:pedidos grupo:processadores
+
+XACK stream:pedidos grupo:processadores 1790540869274-0
+XPENDING stream:pedidos grupo:processadores</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">XPENDING antes -&gt; 2 mensagens pendentes
+XACK           -&gt; 1
+XPENDING depois-&gt; 1 mensagem pendente</pre>
+<p class="explica">O <code>&gt;</code> pede apenas mensagens nunca entregues ao grupo — repetir o comando devolve vazio. As entregues ficam pendentes até o <code>XACK</code>. Se o consumidor morrer agora, a mensagem restante não se perde: outro consumidor pode reivindicá-la. É precisamente a garantia que o Pub/Sub não tem, onde publicar sem assinante devolve 0 e a mensagem desaparece.</p>
+<p class="fonte">Lab 3, PARTE2-EVIDENCIAS.md, Seção 12</p>
+</div>
+<div class="demo">
+<h4>O reinício que prova duas coisas de uma vez</h4>
+<pre class="codigo"># antes do reinício
+CONFIG SET maxmemory 512mb
+CONFIG SET maxmemory-policy allkeys-lru
+SET persist:test &quot;ok&quot;
+
+$ docker restart redis
+
+# depois
+GET persist:test
+CONFIG GET maxmemory
+CONFIG GET maxmemory-policy</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">GET persist:test      -&gt; &quot;ok&quot;           (o dado sobreviveu)
+CONFIG GET maxmemory  -&gt; 0              (voltou ao padrão)
+CONFIG GET maxmemory-policy -&gt; noeviction</pre>
+<p class="explica">O dado persistiu porque o AOF foi habilitado nos argumentos do contêiner — configuração declarada, que sobrevive. Os 512 MB e o <code>allkeys-lru</code>, definidos por <code>CONFIG SET</code>, evaporaram. A lição está no contraste: o que está declarado persiste, o que foi ajustado em tempo de execução não.</p>
+<p class="fonte">Lab 3, PARTE2-EVIDENCIAS.md, Seções 16.3 e 19</p>
+</div>
+<div class="fechamento"><span class="rotulo">Fechamento</span><p>O Redis vai muito além do cache de strings, e o fio comum das estruturas deste módulo é a troca consciente: bitmap e HyperLogLog trocam detalhe por memória; Stream troca simplicidade por garantia; RDB troca durabilidade por compactação. Saber o que se está abrindo mão é a competência real. Falta agora juntar os três sistemas da disciplina.</p></div>
+<div class="perguntas"><h3>Para discutir em sala</h3><ol>
+<li>Você precisa saber quantos usuários únicos acessaram o site no mês. HyperLogLog ou Set? O que muda na resposta se depois pedirem a lista de quem acessou?</li>
+<li>Por que um bitmap de presença com IDs de usuário esparsos (1, 5000, 900000) pode ser um desperdício?</li>
+<li>Sua fila de e-mails usa Pub/Sub e alguns e-mails não são enviados. Qual a causa provável?</li>
+<li>Uma instância guarda cache e também locks distribuídos. Que política de eviction você escolhe?</li>
+</ol></div>
+</section>
+<section class="modulo" style="--cor:#5b4a8a">
+<div class="modulo-head">
+<span class="num">M&oacute;dulo 11</span><span class="dur">35 minutos</span>
+</div>
+<h2>Os três juntos: registro, busca e latência</h2>
+<div class="abertura">Os três laboratórios pareciam exercícios separados. Não eram: juntos, eles montam a arquitetura que aparece em quase todo sistema de porte — e respondem à pergunta de qual banco usar com um &quot;os três, em camadas diferentes&quot;.</div>
+<h3>Objetivos de aprendizagem</h3><ul>
+<li>Descrever o fluxo MongoDB → GELF → Logstash → Elasticsearch → Kibana e o papel de cada peça.</li>
+<li>Explicar por que o acoplamento entre os sistemas é unidirecional e o que isso garante.</li>
+<li>Avaliar a escolha de UDP para transporte de log, com o que ela ganha e o que sacrifica.</li>
+<li>Posicionar o Redis como camada de latência e reconhecer o problema de invalidação que ele cria.</li>
+<li>Aplicar o critério de decisão entre os três sistemas a requisitos concretos.</li>
+</ul>
+<h3>Conceitos</h3>
+<div class="conceito">
+<h4>O fluxo do Lab 2, peça por peça</h4>
+<p>O MongoDB escreve log na saída padrão, como qualquer processo. O driver de log GELF do Docker intercepta essa saída e a envia por UDP para a porta 12201. O Logstash escuta ali, aplica o pipeline configurado e escreve no Elasticsearch, num índice nomeado por data. O Kibana lê o Elasticsearch e apresenta. Nenhuma peça conhece as outras além da vizinha imediata: trocar o Elasticsearch por outro destino exigiria mudar apenas o output do Logstash.</p>
 <div class="caixa analogia"><span class="rotulo">Analogia</span><p>Uma esteira de triagem postal. Cada posto sabe de onde recebe e para onde entrega, e nenhum precisa conhecer o percurso inteiro.</p></div>
 </div>
 <div class="conceito">
@@ -846,23 +1227,33 @@ Capital do Brasil            1.99875  0.99924        0.998748    0.999374</pre>
 <div class="caixa erro"><span class="rotulo">Erro comum</span><p>Inverter a dependência, fazendo a aplicação escrever primeiro no Elasticsearch e depois no banco principal. Qualquer indisponibilidade da busca passa a derrubar a escrita.</p></div>
 </div>
 <div class="conceito">
-<h4>UDP: a escolha que troca garantia por isolamento</h4>
-<p>GELF sobre UDP não estabelece conexão nem confirma entrega. A consequência boa é que o contêiner sobe e opera mesmo com o Logstash fora do ar — os pacotes são simplesmente descartados e nada bloqueia. A consequência ruim é que não há garantia: sob perda de rede ou sobrecarga, linhas de log somem sem aviso. Para telemetria é um compromisso razoável; para auditoria, não. Auditoria exige transporte confiável e confirmação de entrega.</p>
-<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Usar o mesmo pipeline de log best-effort para trilha de auditoria com valor legal. O dia em que faltar a linha crítica, não haverá como saber se ela nunca existiu ou se foi perdida.</p></div>
+<h4>UDP: troca garantia por isolamento</h4>
+<p>GELF sobre UDP não estabelece conexão nem confirma entrega. A consequência boa é que o contêiner sobe e opera mesmo com o Logstash fora do ar — os pacotes são descartados e nada bloqueia. A ruim é que não há garantia: sob perda de rede ou sobrecarga, linhas de log somem sem aviso. Para telemetria o compromisso é razoável; para auditoria, não. Repare que é a mesma escolha do Pub/Sub do Redis: entrega a quem está ouvindo, e quem não estava perdeu.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Usar um pipeline best-effort para trilha de auditoria com valor legal. No dia em que faltar a linha crítica, não haverá como saber se ela nunca existiu ou se foi perdida.</p></div>
 </div>
 <div class="conceito">
-<h4>O índice de busca nunca é a fonte da verdade</h4>
-<p>Este é o princípio que organiza tudo. O Elasticsearch é um índice derivado: se for perdido, reconstrói-se reindexando a partir da fonte. Se a fonte for perdida, o índice vira uma coleção de afirmações sobre dados que não existem mais. Isso tem consequência prática de projeto: todo pipeline de indexação precisa ser reexecutável do zero, e a decisão de &quot;gravar só no Elasticsearch porque é mais rápido&quot; deve ser recusada por padrão.</p>
-<div class="caixa analogia"><span class="rotulo">Analogia</span><p>O acervo e o catálogo da biblioteca. Perder o catálogo é trabalhoso; perder o acervo é irreversível.</p></div>
+<h4>A terceira camada: latência</h4>
+<p>MongoDB responde &quot;qual o estado deste registro, com garantia&quot;. Elasticsearch responde &quot;que documentos são relevantes para esta pergunta&quot;. Redis responde &quot;qual o valor agora, no menor tempo possível&quot; — e aceita perdê-lo. As três perguntas exigem estruturas de dados diferentes, e é por isso que nenhum sistema responde bem às três. O Redis não é um banco menor: é um banco com outro compromisso, em que a memória volátil é característica de projeto e não limitação.</p>
+<div class="caixa analogia"><span class="rotulo">Analogia</span><p>A biblioteca tem o acervo, o catálogo e a mesa onde os livros em uso ficam abertos. Perder a mesa custa alguns minutos; perder o catálogo custa um mutirão; perder o acervo é irreversível.</p></div>
+</div>
+<div class="conceito">
+<h4>O índice de busca e o cache nunca são a fonte da verdade</h4>
+<p>Este é o princípio que organiza tudo. Elasticsearch e Redis são derivados: se forem perdidos, reconstroem-se a partir da fonte. Se a fonte for perdida, viram uma coleção de afirmações sobre dados que não existem mais. Daí duas consequências de projeto: todo pipeline de indexação precisa ser reexecutável do zero, e todo cache precisa tolerar estar vazio — se o sistema não funciona com o cache frio, ele não tem um cache, tem uma dependência.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Gravar no Redis algo que não existe em nenhum outro lugar — um contador de uso faturável, o estado de um carrinho. No dia do reinício sem persistência, o dado simplesmente não volta.</p></div>
+</div>
+<div class="conceito">
+<h4>A invalidação, que é o preço do cache</h4>
+<p>Cachear é duplicar, e toda duplicata pode divergir. O TTL limita por quanto tempo a divergência dura, mas não a impede: se o registro mudar no MongoDB, o Redis continua servindo o valor antigo até o prazo vencer. Quando isso não é tolerável, é preciso invalidar explicitamente no momento da escrita — apagar a chave no mesmo fluxo que atualiza o banco. É por isso que a famosa frase sobre as duas coisas difíceis em computação cita nomear coisas e invalidar cache.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Escolher um TTL longo por medo de sobrecarregar o banco e conviver com dados desatualizados que ninguém consegue explicar. O TTL é um limite superior para a inconsistência — defini-lo é decidir quanta divergência se aceita.</p></div>
 </div>
 <div class="conceito">
 <h4>O critério de escolha, sem falso dilema</h4>
-<p>A pergunta útil não é &quot;qual banco é melhor&quot;, é &quot;que pergunta este dado precisa responder, e com que garantia&quot;. Estado atual de um registro, com escrita confirmada e possibilidade de transação: MongoDB. Relevância em texto livre, agregação exploratória sobre volume, busca semântica: Elasticsearch. Quando um sistema precisa das duas coisas — e a maioria precisa — a resposta é os dois, com fluxo de sincronização explícito e a verdade morando em um só lugar.</p>
-<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Escolher um único sistema para tudo e depois forçá-lo no papel para o qual não foi feito: implementar busca por relevância com regex no MongoDB, ou tratar o Elasticsearch como banco transacional.</p></div>
+<p>A pergunta útil não é &quot;qual banco é melhor&quot;, é &quot;que pergunta este dado precisa responder, com que garantia e em quanto tempo&quot;. Estado atual com escrita confirmada e transação: MongoDB. Relevância em texto livre, agregação exploratória, busca semântica: Elasticsearch. Leitura em microssegundos, contador atômico, estado efêmero com prazo: Redis. Quando um sistema precisa das três coisas — e a maioria precisa —, a resposta é os três, com fluxo de sincronização explícito e a verdade morando em um só lugar.</p>
+<div class="caixa erro"><span class="rotulo">Erro comum</span><p>Escolher um único sistema para tudo e depois forçá-lo no papel para o qual não foi feito: busca por relevância com regex no MongoDB, banco transacional no Elasticsearch, ou dado de negócio que só existe no Redis.</p></div>
 </div>
 <h3>Na pr&aacute;tica</h3>
 <div class="demo">
-<h4>O pipeline em treze linhas</h4>
+<h4>O pipeline do Lab 2 em treze linhas</h4>
 <pre class="codigo"># lab02-elastic/logstash/pipeline/logstash.conf
 input {
   gelf { port =&gt; 12201 }
@@ -879,8 +1270,8 @@ output {
 <pre class="saida">health status index                   docs.count
 yellow open   mongodb-logs-2026.09.08        160
 yellow open   mongodb-logs-2026.09.09         86</pre>
-<p class="explica">Dois índices, um por dia — a rotação vem do padrão de data no nome. É exatamente esse formato que justifica o index template do Módulo 6: índices que nascem sozinhos precisam de mapping declarado antes.</p>
-<p class="fonte">lab02-elastic/logstash/pipeline/logstash.conf; estado do cluster em 09/09/2026</p>
+<p class="explica">Dois índices, um por dia — a rotação vem do padrão de data no nome. É exatamente esse formato que justifica o index template: índices que nascem sozinhos precisam de mapping declarado antes.</p>
+<p class="fonte">lab02-elastic/logstash/pipeline/logstash.conf</p>
 </div>
 <div class="demo">
 <h4>A prova de que o acoplamento é de um lado só</h4>
@@ -896,31 +1287,51 @@ $ curl -s &quot;localhost:9200/_cat/indices/mongodb-logs-*?v&quot;</pre>
 <p class="fonte">Reorganização do repositório, 08/09/2026</p>
 </div>
 <div class="demo">
-<h4>A mesma pergunta nos dois sistemas</h4>
-<pre class="codigo">// MongoDB — quantos documentos por categoria
+<h4>A mesma pergunta nos três sistemas</h4>
+<pre class="codigo">// MongoDB — agregar por categoria
 db.transacoes.aggregate([
   { $group: { _id: &quot;$tipo&quot;, total: { $sum: 1 } } }
 ]);
 
 // Elasticsearch — a mesma pergunta
 GET transacoes/_search
-{ &quot;size&quot;: 0, &quot;aggs&quot;: { &quot;por_tipo&quot;: { &quot;terms&quot;: { &quot;field&quot;: &quot;tipo&quot; } } } }</pre>
+{ &quot;size&quot;: 0, &quot;aggs&quot;: { &quot;por_tipo&quot;: { &quot;terms&quot;: { &quot;field&quot;: &quot;tipo&quot; } } } }
+
+// Redis — a contagem ja pronta, mantida a cada escrita
+INCR transacoes:tipo:compra
+GET  transacoes:tipo:compra</pre>
 <p class="rot-saida">Sa&iacute;da real</p>
 <pre class="saida">MongoDB:       [ { _id: &quot;compra&quot;, total: 12 }, { _id: &quot;venda&quot;, total: 10 } ]
-Elasticsearch: [ { key: &quot;compra&quot;, doc_count: 12 }, { key: &quot;venda&quot;, doc_count: 10 } ]</pre>
-<p class="explica">Mesma resposta, vocabulário diferente. A distinção entre os dois sistemas não está em agregar — os dois agregam bem. Está no que cada um faz com texto: só o Elasticsearch ordena por relevância, e só o MongoDB garante a escrita que originou o dado.</p>
-<p class="fonte">GABARITO.md Parte 12 e PARTE2-EVIDENCIAS.md seção 12.9</p>
+Elasticsearch: [ { key: &quot;compra&quot;, doc_count: 12 }, { key: &quot;venda&quot;, doc_count: 10 } ]
+Redis:         &quot;12&quot;</pre>
+<p class="explica">Os dois primeiros <strong>calculam</strong> a resposta no momento da pergunta, percorrendo os dados. O Redis não calcula nada: devolve um número que foi mantido atualizado a cada escrita. É a troca central da camada de latência — trabalho antecipado na escrita em troca de leitura constante. O custo é que esse contador pode divergir se alguma escrita não passar pelo caminho que o incrementa.</p>
+<p class="fonte">GABARITO.md Parte 12, PARTE2-EVIDENCIAS.md 12.9 e Lab 3 Seção 5.3</p>
 </div>
-<div class="fechamento"><span class="rotulo">Fechamento</span><p>A competência que esta aula pretende deixar não é sintaxe de nenhum dos dois — isso está na documentação. É saber formular a pergunta certa diante de um requisito: que garantia este dado exige, que pergunta ele precisa responder, e onde mora a verdade. Respondido isso, a escolha da ferramenta é quase automática.</p></div>
+<div class="demo">
+<h4>A arquitetura completa, nos contêineres</h4>
+<pre class="codigo">$ docker ps --format &quot;table {{.Names}}\t{{.Status}}&quot;</pre>
+<p class="rot-saida">Sa&iacute;da real</p>
+<pre class="saida">NAMES               STATUS
+redis               Up (healthy)
+redisinsight        Up
+elasticsearch       Up (healthy)
+kibana              Up
+logstash            Up
+mongodb-container   Up</pre>
+<p class="explica">Seis contêineres, três bancos, três papéis. Nenhum dado de negócio é escrito diretamente no Elasticsearch ou no Redis: tudo que chega neles foi derivado de outra fonte. Essa frase é o resumo da disciplina inteira.</p>
+<p class="fonte">Ambiente dos Labs 1, 2 e 3</p>
+</div>
+<div class="fechamento"><span class="rotulo">Fechamento</span><p>A competência que esta aula pretende deixar não é sintaxe de nenhum dos três — isso está na documentação. É saber formular a pergunta certa diante de um requisito: que garantia este dado exige, em quanto tempo ele precisa ser lido, que pergunta ele precisa responder, e onde mora a verdade. Respondido isso, a escolha da ferramenta é quase automática — e, com mais frequência do que parece, a resposta certa é mais de uma.</p></div>
 <div class="perguntas"><h3>Para discutir em sala</h3><ol>
-<li>Se o Elasticsearch é descartável e reconstruível, por que fazer backup dele?</li>
+<li>Se o Elasticsearch e o Redis são reconstruíveis, por que fazer backup deles?</li>
 <li>Sua aplicação precisa que uma alteração no MongoDB apareça na busca em menos de um segundo. O pipeline de log serve? O que você usaria?</li>
-<li>Que perguntas você faria a um time que propõe migrar do PostgreSQL para o MongoDB?</li>
+<li>Você cacheia no Redis o perfil do usuário com TTL de 1 hora. O usuário troca a foto e reclama que a antiga continua aparecendo. O que fazer, e qual o custo de cada alternativa?</li>
+<li>Que perguntas você faria a um time que propõe guardar o carrinho de compras apenas no Redis?</li>
 <li>Onde mora a fonte da verdade no sistema em que você trabalha ou estuda, e como você sabe disso?</li>
 </ol></div>
 </section>
 <section class="secao"><h2>Anexo A &mdash; O que o roteiro n&atilde;o conta</h2>
-<p class="intro">Problemas que aconteceram de verdade ao executar os dois laborat&oacute;rios nesta m&aacute;quina. Cada um traz o sintoma, a causa raiz e a li&ccedil;&atilde;o generaliz&aacute;vel.</p>
+<p class="intro">Problemas que aconteceram de verdade ao executar os tr&ecirc;s laborat&oacute;rios nesta m&aacute;quina. Cada um traz o sintoma, a causa raiz e a li&ccedil;&atilde;o generaliz&aacute;vel.</p>
 <div class="armadilha">
 <h4>A imagem mongo:4.4 do roteiro não sobe em kernel moderno <span class="tag">MongoDB</span></h4>
 <dl>
@@ -1014,6 +1425,88 @@ apos 1 update              -&gt;  n=3, N=3  (docs.count=2, docs.deleted=1)</pre>
 </dl>
 <pre class="saida">show dbs  -&gt;  SyntaxError no playground   |   db.getMongo().getDBNames()  -&gt;  funciona</pre>
 <div class="licao"><b>Li&ccedil;&atilde;o:</b> O mongosh parece um shell mas é um interpretador JavaScript. Saber qual linguagem está sendo interpretada evita uma classe inteira de erros que parecem inexplicáveis.</div>
+</div>
+<div class="armadilha">
+<h4>A chave é tipada: o exercício integrador do roteiro não roda <span class="tag">Redis</span></h4>
+<dl>
+<dt>Sintoma</dt><dd>O primeiro comando da Seção 20 falha com <code>WRONGTYPE Operation against a key holding the wrong kind of value</code>, e o exercício integrador para antes de começar.</dd>
+<dt>Causa raiz</dt><dd>A Seção 5.1 já havia criado <code>user:1001</code> como string (<code>SET</code> seguido de <code>APPEND</code>). A Seção 20 tenta usar o mesmo nome como hash. No Redis toda chave carrega um tipo e um comando de outro tipo é recusado — não há conversão nem sobrescrita. A lista de limpeza da Seção 23 também não apaga essa chave entre uma seção e outra.</dd>
+<dt>Diagn&oacute;stico</dt><dd><code>TYPE user:1001</code> devolve <code>string</code>, e <code>GET user:1001</code> mostra o valor deixado pela Seção 5.1.</dd>
+<dt>Corre&ccedil;&atilde;o</dt><dd>No laboratório, <code>DEL user:1001</code> antes do <code>HSET</code> — comando que não está no roteiro. Em código de verdade, não reaproveitar o nome: <code>user:nome:1001</code> para a string e <code>user:1001</code> para o hash.</dd>
+</dl>
+<pre class="saida">HSET user:1001 nome &quot;João&quot; ... -&gt; WRONGTYPE Operation against a key holding the wrong kind of value
+TYPE user:1001                 -&gt; string
+GET  user:1001                 -&gt; &quot;João Silva&quot;</pre>
+<div class="licao"><b>Li&ccedil;&atilde;o:</b> O <code>SET</code> sobrescreve qualquer chave sem reclamar, o que passa a impressão de que o Redis é permissivo com tipos. Não é: <code>HSET</code>, <code>LPUSH</code>, <code>SADD</code> e <code>ZADD</code> exigem a chave inexistente ou já do tipo certo. O erro só aparece no ambiente onde a chave antiga existir — nunca no ambiente limpo em que o código foi testado.</div>
+</div>
+<div class="armadilha">
+<h4>A fila que processa ao contrário <span class="tag">Redis</span></h4>
+<dl>
+<dt>Sintoma</dt><dd>Uma fila de trabalhos entrega os itens na ordem inversa. Nenhum erro, nenhum log — os trabalhos mais antigos simplesmente vão sendo empurrados para o fim e podem nunca ser processados se a fila nunca esvaziar.</dd>
+<dt>Causa raiz</dt><dd>Inserção e consumo pela mesma ponta. <code>RPUSH</code> com <code>RPOP</code> é uma pilha (LIFO), não uma fila. A list do Redis não tem semântica própria: FIFO ou LIFO nasce da combinação de comandos escolhida.</dd>
+<dt>Diagn&oacute;stico</dt><dd>Um <code>LRANGE chave 0 -1</code> antes e depois do consumo mostra de que ponta os itens estão saindo.</dd>
+<dt>Corre&ccedil;&atilde;o</dt><dd><code>RPUSH</code> para enfileirar e <code>LPOP</code> para consumir — ou <code>LPUSH</code> com <code>RPOP</code>. O que importa é que as pontas sejam opostas.</dd>
+</dl>
+<pre class="saida">RPUSH fila:etl &quot;extrair&quot; &quot;transformar&quot; &quot;validar&quot; &quot;carregar&quot; &quot;notificar&quot;
+RPOP fila:etl  -&gt; &quot;job:notificar&quot;     (saiu o ultimo, nao o primeiro)
+RPOP fila:etl  -&gt; &quot;job:carregar&quot;</pre>
+<div class="licao"><b>Li&ccedil;&atilde;o:</b> Estruturas simétricas exigem convenção explícita. Vale fixar uma combinação em todo o projeto e documentá-la, porque metade dos comandos funciona e produz o comportamento errado em silêncio.</div>
+</div>
+<div class="armadilha">
+<h4>MULTI/EXEC não faz rollback, e a transação vive na conexão <span class="tag">Redis</span></h4>
+<dl>
+<dt>Sintoma</dt><dd>Um comando falha no meio de uma transação e os demais são aplicados assim mesmo, deixando estado parcial. Em outro cenário, a transação simplesmente não existe e o <code>EXEC</code> responde <code>ERR EXEC without MULTI</code>.</dd>
+<dt>Causa raiz</dt><dd>Duas propriedades distintas do modelo. Primeira: o <code>EXEC</code> executa a fila inteira e devolve um array em que cada posição pode ser resultado ou erro — não há desfazimento. Segunda: o <code>MULTI</code> abre um contexto <strong>naquela conexão</strong>; com um pool que entrega conexões diferentes a cada chamada, os comandos se espalham e a transação se desfaz.</dd>
+<dt>Diagn&oacute;stico</dt><dd>Inspecionar o array devolvido pelo <code>EXEC</code> posição a posição, em vez de tratar a resposta como sucesso único. Para o problema de conexão, verificar se a biblioteca cliente expõe transação ou conexão reservada.</dd>
+<dt>Corre&ccedil;&atilde;o</dt><dd>Quando a operação exige ler um valor e decidir o que escrever, usar script Lua em vez de MULTI/EXEC — o script roda no servidor como unidade indivisível e pode ramificar.</dd>
+</dl>
+<pre class="saida">MULTI / INCR nao:e:numero / SET marcador:pos:erro &quot;fui gravado&quot; / EXEC
+  -&gt; 1) ERR value is not an integer or out of range
+     2) OK
+GET marcador:pos:erro -&gt; &quot;fui gravado&quot;   (aplicado apesar do erro anterior)</pre>
+<div class="licao"><b>Li&ccedil;&atilde;o:</b> MULTI/EXEC garante isolamento e atomicidade de execução, não atomicidade de efeito. Tratá-lo como o BEGIN/COMMIT de um banco relacional leva a supor uma garantia que não existe.</div>
+</div>
+<div class="armadilha">
+<h4>CONFIG SET aplica agora e evapora no reinício <span class="tag">Redis</span></h4>
+<dl>
+<dt>Sintoma</dt><dd>Um ajuste de <code>maxmemory</code> feito durante um incidente resolve o problema — e o mesmo incidente reaparece no próximo reinício, possivelmente meses depois.</dd>
+<dt>Causa raiz</dt><dd>O <code>CONFIG SET</code> altera apenas a configuração do processo em execução. Ele não escreve no arquivo de configuração.</dd>
+<dt>Diagn&oacute;stico</dt><dd>Reiniciar e comparar. No laboratório, <code>maxmemory</code> fora posto em 512 MB e a política em <code>allkeys-lru</code>; depois do <code>docker restart</code> voltaram a 0 e <code>noeviction</code>.</dd>
+<dt>Corre&ccedil;&atilde;o</dt><dd>Declarar a configuração onde ela persiste: <code>redis.conf</code>, argumentos do contêiner ou o compose — que foi onde este laboratório colocou o <code>--appendonly yes</code>. <code>CONFIG REWRITE</code> grava a configuração corrente no arquivo, quando existe um.</dd>
+</dl>
+<pre class="saida">antes:  CONFIG SET maxmemory 512mb / maxmemory-policy allkeys-lru
+depois: GET persist:test           -&gt; &quot;ok&quot;
+        CONFIG GET maxmemory       -&gt; 0
+        CONFIG GET maxmemory-policy-&gt; noeviction</pre>
+<div class="licao"><b>Li&ccedil;&atilde;o:</b> O mesmo reinício mostrou os dois lados: o dado sobreviveu porque o AOF estava declarado nos argumentos, e a configuração se perdeu porque fora ajustada em tempo de execução. O que está declarado sobrevive; o que foi ajustado a quente, não.</div>
+</div>
+<div class="armadilha">
+<h4>A imagem oficial do Redis não persiste por padrão <span class="tag">Redis</span></h4>
+<dl>
+<dt>Sintoma</dt><dd>A Seção 19.1 do roteiro manda verificar o AOF, e a resposta é <code>no</code>. O teste de persistência que vem depois não demonstra o que pretende.</dd>
+<dt>Causa raiz</dt><dd>A imagem <code>redis</code> do Docker Hub sobe com <code>appendonly no</code>. A durabilidade fica por conta apenas dos snapshots RDB, que gravam em intervalos e podem perder tudo desde o último.</dd>
+<dt>Diagn&oacute;stico</dt><dd><code>CONFIG GET appendonly</code> antes de confiar em qualquer teste de persistência.</dd>
+<dt>Corre&ccedil;&atilde;o</dt><dd>Ligar o AOF na subida do contêiner: <code>command: [&quot;redis-server&quot;, &quot;--appendonly&quot;, &quot;yes&quot;]</code>. Foi o que este laboratório fez — sem isso a Seção 19 não teria o que mostrar.</dd>
+</dl>
+<pre class="saida">CONFIG GET appendonly   -&gt; yes   (por causa do --appendonly yes no compose)
+CONFIG GET appendfsync  -&gt; everysec
+CONFIG GET save         -&gt; 3600 1 300 100 60 10000   (RDB segue ativo em paralelo)</pre>
+<div class="licao"><b>Li&ccedil;&atilde;o:</b> Imagens oficiais trazem padrões voltados a conveniência e desempenho, não a durabilidade. Antes de usar qualquer uma em algo que importe, vale ler o que ela liga e o que deixa desligado.</div>
+</div>
+<div class="armadilha">
+<h4>Limpar por lista fixa não escala <span class="tag">Redis</span></h4>
+<dl>
+<dt>Sintoma</dt><dd>Depois de executar toda a lista de <code>DEL</code> da Seção 23, o banco ainda tem 14 chaves.</dd>
+<dt>Causa raiz</dt><dd>A lista foi escrita à mão e não acompanhou as chaves criadas em outras seções. Nove das sobreviventes vêm de seções do próprio roteiro: <code>user:2001</code> a <code>user:2003</code> (5.2), <code>equipe:sorteio</code> (6.5), <code>pedido:1</code> e <code>pedidos:contador</code> (17.1), <code>user:1001</code>, <code>acessos:user:1001</code> e <code>fila:cadastros</code> (Seção 20).</dd>
+<dt>Diagn&oacute;stico</dt><dd><code>DBSIZE</code> e <code>KEYS *</code> depois da limpeza. Cada <code>DEL</code> também informa quantas chaves realmente removeu — os zeros denunciam entradas obsoletas na lista.</dd>
+<dt>Corre&ccedil;&atilde;o</dt><dd>Apagar por prefixo com iteração incremental: <code>redis-cli --scan --pattern </code>cache:*<code> | xargs -r redis-cli DEL</code>. Melhor ainda, dar TTL a tudo que é descartável e não precisar limpar.</dd>
+</dl>
+<pre class="saida">Após toda a lista de DEL da Seção 23:
+DBSIZE -&gt; 14
+KEYS * -&gt; ranking:torneio, equipe:sorteio, visitas:pagina:/produtos, acessos:user:1001,
+          pedido:1, user:1001, session:user:2002, fila:cadastros, user:2001,
+          pedidos:contador, user:2003, user:2002, ...</pre>
+<div class="licao"><b>Li&ccedil;&atilde;o:</b> Qualquer inventário mantido à mão desatualiza silenciosamente. Em produção isso vira vazamento de memória: chaves órfãs que ninguém sabe de onde vieram e ninguém ousa apagar.</div>
 </div>
 </section>
 <section class="secao"><h2>Anexo B &mdash; Exerc&iacute;cios</h2>
@@ -1300,6 +1793,121 @@ GET meu_indice/_mapping
 <p>Quatro vezes menos memória é a diferença entre caber e não caber no heap de um nó — e o HNSW só é rápido quando o grafo está em memória. O custo é um erro de precisão que aparece na terceira ou quarta casa decimal do score, como se mediu no laboratório: o knn ficou levemente abaixo do valor teórico de (1+cos)/2, justamente por causa da quantização. Em recuperação para RAG isso é irrelevante, porque o que importa é o conjunto dos k vizinhos, não o valor exato do score. Seria relevante se o score fosse usado como limiar absoluto de decisão. Vale notar que reduzir dimensões do modelo, quando ele suporta, costuma economizar mais que quantizar.</p>
 <p style="font-size:9pt;color:#6b7280;margin:0"><b>Crit&eacute;rio de corre&ccedil;&atilde;o:</b> O cálculo precisa estar correto e a discussão precisa reconhecer que a perda de precisão é aceitável para ranking e problemática para limiar absoluto. Lembrar do grafo HNSW além dos vetores é diferencial.</p>
 </div></div>
+<div class="exercicio">
+<div class="ex-head">
+<span class="ex-num">11</span>
+<span class="ex-titulo">Escolher a estrutura a partir da operação</span>
+<span class="selo redis">redis</span>
+<span class="selo basico">basico</span>
+<span class="selo basico">15 min</span>
+</div>
+<p>Para cada requisito abaixo, escolha a estrutura do Redis e escreva os comandos: (a) saber se um CPF já se cadastrou na promoção, sem permitir duplicata; (b) guardar o perfil de um usuário permitindo atualizar só o telefone; (c) manter os 10 produtos mais vendidos da semana; (d) guardar o resultado de um relatório caro por 15 minutos.</p>
+<p><b>Espera-se:</b> A estrutura escolhida para cada caso, os comandos, e a justificativa da escolha pela operação que ela torna barata.</p>
+<div class="solucao"><span class="rotulo">Solu&ccedil;&atilde;o</span>
+<pre class="codigo"># (a) SET — unicidade, e o retorno ja responde se era duplicata
+SADD promo:cpfs &quot;11122233344&quot;      # 1 = entrou agora; 0 = ja existia
+SCARD promo:cpfs
+
+# (b) HASH — atualizacao parcial sem reler o documento
+HSET user:500 nome &quot;Ana&quot; telefone &quot;61999990000&quot; email &quot;ana@ex.com&quot;
+HSET user:500 telefone &quot;61988887777&quot;
+
+# (c) SORTED SET — ordenacao mantida a cada venda
+ZINCRBY vendas:semana 1 &quot;produto:42&quot;
+ZREVRANGE vendas:semana 0 9 WITHSCORES
+
+# (d) STRING com TTL — o prazo substitui a rotina de limpeza
+SETEX relatorio:vendas:2026-09 900 &quot;{...json...}&quot;</pre>
+<p>O critério não é &quot;que estrutura parece certa&quot;, é &quot;que operação precisa ser barata&quot;. Em (a) a operação é testar e inserir ao mesmo tempo, e o retorno do <code>SADD</code> responde sem uma segunda consulta. Em (b) é atualizar um campo sem tocar nos outros — com JSON em string seria ler, alterar e regravar, com corrida entre a leitura e a escrita. Em (c) é manter a ordem a cada incremento, e o <code>ZINCRBY</code> reordena sozinho. Em (d) é esquecer sozinho.</p>
+<p style="font-size:9pt;color:#6b7280;margin:0"><b>Crit&eacute;rio de corre&ccedil;&atilde;o:</b> Cada escolha precisa vir com a operação que a justifica. Responder apenas o nome da estrutura não atende. Em (a), usar o retorno do <code>SADD</code> como resposta à pergunta é o ponto de maior valor.</p>
+</div></div>
+<div class="exercicio">
+<div class="ex-head">
+<span class="ex-num">12</span>
+<span class="ex-titulo">Consertar um rate limit que bloqueia para sempre</span>
+<span class="selo redis">redis</span>
+<span class="selo desafio">desafio</span>
+<span class="selo basico">20 min</span>
+</div>
+<p>Um rate limit implementado com <code>INCR</code> seguido de <code>EXPIRE</code> funciona há meses. Hoje alguns usuários relatam bloqueio permanente: por mais que esperem, continuam barrados. Explique a causa, mostre como diagnosticar e implemente a correção.</p>
+<p><b>Espera-se:</b> O diagnóstico da janela entre os dois comandos, o comando que confirma a suspeita e uma implementação atômica.</p>
+<div class="solucao"><span class="rotulo">Solu&ccedil;&atilde;o</span>
+<pre class="codigo"># DIAGNOSTICO: a chave do usuario ficou sem TTL
+TTL rl:user:42        # -1 = existe e nunca expira  &lt;-- a causa
+                      # -2 seria &quot;nao existe&quot;; qualquer positivo seria normal
+
+# CAUSA: entre estes dois comandos ha uma janela
+INCR rl:user:42       # se o processo morrer aqui...
+EXPIRE rl:user:42 60  # ...isto nunca roda, e a chave fica eterna
+
+# CORRECAO: um unico script, atomico e com ramificacao
+EVAL &quot;local v = redis.call(&#x27;INCR&#x27;, KEYS[1])
+      if v == 1 then redis.call(&#x27;EXPIRE&#x27;, KEYS[1], ARGV[1]) end
+      return v&quot; 1 rl:user:42 60
+
+# REMEDIACAO das chaves ja quebradas:
+redis-cli --scan --pattern &quot;rl:*&quot; | xargs -r redis-cli DEL</pre>
+<p>O <code>TTL</code> devolvendo -1 é a assinatura do problema: a chave existe e nunca vai expirar, então o contador jamais volta a zero. A causa é que <code>INCR</code> e <code>EXPIRE</code> são duas viagens ao servidor, e nada garante que a segunda aconteça — basta o processo da aplicação morrer, ou a conexão cair, entre uma e outra. O script Lua elimina a janela porque roda inteiro dentro do servidor, e precisa ser Lua e não MULTI/EXEC porque há uma decisão no meio: só define o prazo se for a primeira requisição da janela, e MULTI/EXEC enfileira sem ver resultados intermediários. Repare que o problema é raro por requisição e inevitável em escala.</p>
+<p style="font-size:9pt;color:#6b7280;margin:0"><b>Crit&eacute;rio de corre&ccedil;&atilde;o:</b> Identificar o <code>TTL -1</code> como diagnóstico, explicar a janela entre os dois comandos e justificar por que Lua e não MULTI/EXEC. Propor apenas &quot;juntar os comandos numa transação&quot; não atende, porque MULTI/EXEC não permite a ramificação.</p>
+</div></div>
+<div class="exercicio">
+<div class="ex-head">
+<span class="ex-num">13</span>
+<span class="ex-titulo">Contar únicos com orçamento de memória</span>
+<span class="selo redis">redis</span>
+<span class="selo intermediario">intermediario</span>
+<span class="selo basico">20 min</span>
+</div>
+<p>Você precisa reportar visitantes únicos por dia e também por mês, num site com 5 milhões de visitantes distintos mensais. Compare guardar os IDs em <code>SET</code> com usar <code>HyperLogLog</code>: estime a memória de cada opção, diga o que se perde e escolha. Depois responda: e se o time de marketing pedir a lista dos visitantes de uma campanha?</p>
+<p><b>Espera-se:</b> A estimativa numérica, os comandos das duas opções e uma decisão justificada.</p>
+<div class="solucao"><span class="rotulo">Solu&ccedil;&atilde;o</span>
+<pre class="codigo"># OPCAO A — SET: guarda os elementos
+SADD visitantes:2026-09-27 &quot;u:8412355&quot;
+SCARD visitantes:2026-09-27
+SUNIONSTORE visitantes:2026-09 visitantes:2026-09-01 ... visitantes:2026-09-30
+#   ~16 bytes por ID + overhead  -&gt;  5.000.000 x ~50 B  ~=  250 MB por mes
+
+# OPCAO B — HYPERLOGLOG: guarda um resumo estatistico
+PFADD hll:visitantes:2026-09-27 &quot;u:8412355&quot;
+PFCOUNT hll:visitantes:2026-09-27
+PFMERGE hll:visitantes:2026-09 hll:visitantes:2026-09-01 ... hll:visitantes:2026-09-30
+PFCOUNT hll:visitantes:2026-09
+#   ~12 KB por chave, independentemente do volume
+#   30 dias + 1 mensal  -&gt;  ~372 KB</pre>
+<p>A diferença é de cerca de três ordens de grandeza: centenas de megabytes contra centenas de kilobytes. O HyperLogLog paga isso com um erro de ~0,81% e com a perda de duas capacidades: não dá para perguntar se um usuário específico está lá, nem fazer interseção entre dois contadores. Para um número de relatório, 0,81% é ruído irrelevante — ninguém toma decisão diferente entre 4.960.000 e 5.000.000 de visitantes. O <code>PFMERGE</code> resolve o mensal corretamente, enquanto somar as contagens diárias contaria repetido quem voltou em dias diferentes. Quanto à pergunta final: se for preciso a lista de quem visitou, o HyperLogLog não serve de jeito nenhum e a resposta muda — nesse caso usa-se <code>SET</code> para a campanha específica, que é um recorte menor, e mantém-se o HLL para o número agregado.</p>
+<p style="font-size:9pt;color:#6b7280;margin:0"><b>Crit&eacute;rio de corre&ccedil;&atilde;o:</b> A estimativa precisa mostrar a ordem de grandeza e a resposta precisa nomear o que o HLL não faz. Reconhecer que a pergunta final <strong>muda a escolha</strong> é o ponto central: a estrutura é escolhida pela pergunta, e uma pergunta nova pode invalidá-la.</p>
+</div></div>
+<div class="exercicio">
+<div class="ex-head">
+<span class="ex-num">14</span>
+<span class="ex-titulo">Pub/Sub ou Stream: e-mails que somem</span>
+<span class="selo integrador">integrador</span>
+<span class="selo desafio">desafio</span>
+<span class="selo basico">20 min</span>
+</div>
+<p>Um serviço publica em <code>canal:emails</code> e um worker inscrito envia os e-mails. Em produção, alguns e-mails nunca chegam — sempre em torno dos horários de deploy. Explique a causa, e reescreva a solução com a garantia necessária.</p>
+<p><b>Espera-se:</b> O diagnóstico da perda durante a reinicialização do consumidor e uma implementação com Stream e consumer group.</p>
+<div class="solucao"><span class="rotulo">Solu&ccedil;&atilde;o</span>
+<pre class="codigo"># CAUSA: enquanto o worker reinicia, nao ha assinante.
+#        O PUBLISH devolve 0 e a mensagem deixa de existir.
+PUBLISH canal:emails &quot;para=ana@ex.com&quot;   -&gt; 0     # ninguem ouvindo: perdida
+
+# CORRECAO: stream com consumer group
+XADD stream:emails * para &quot;ana@ex.com&quot; assunto &quot;Bem-vinda&quot;
+XGROUP CREATE stream:emails grupo:workers 0 MKSTREAM
+
+# o worker consome apenas o que nunca foi entregue ao grupo
+XREADGROUP GROUP grupo:workers worker:1 COUNT 10 BLOCK 5000 \
+           STREAMS stream:emails &gt;
+
+# so confirma DEPOIS de enviar de verdade
+XACK stream:emails grupo:workers 1790540869274-0
+
+# o que ficou sem confirmacao continua visivel
+XPENDING stream:emails grupo:workers</pre>
+<p>O Pub/Sub entrega a quem está conectado naquele instante e não guarda nada — o retorno 0 do <code>PUBLISH</code> é a prova de que a mensagem foi descartada. Durante um deploy o worker fica segundos fora do ar, e tudo publicado nesse intervalo se perde. A Stream inverte isso: o evento é gravado num log e fica disponível mesmo sem consumidor algum no momento. Com consumer group, cada mensagem entregue fica pendente até o <code>XACK</code>, então confirmar <strong>depois</strong> do envio real garante que um worker morto no meio do processamento não leve a mensagem junto — ela continua no <code>XPENDING</code> e outro worker pode reivindicá-la com <code>XCLAIM</code>. O mesmo raciocínio vale para o GELF sobre UDP do Lab 2: ali a perda foi aceita conscientemente porque se trata de telemetria.</p>
+<p style="font-size:9pt;color:#6b7280;margin:0"><b>Crit&eacute;rio de corre&ccedil;&atilde;o:</b> Precisa identificar que a perda ocorre quando não há assinante, e que o <code>PUBLISH</code> retornando 0 é o sinal. A solução precisa confirmar com <code>XACK</code> após o envio, não antes — confirmar antes reintroduz exatamente a perda que se queria eliminar.</p>
+</div></div>
 </section>
 <section class="secao"><h2>Anexo C &mdash; Avalia&ccedil;&atilde;o</h2>
 <p class="intro">Quest&otilde;es de racioc&iacute;nio, n&atilde;o de memoriza&ccedil;&atilde;o de sintaxe. O gabarito explica por que cada alternativa errada &eacute; tentadora.</p>
@@ -1403,6 +2011,46 @@ GET meu_indice/_mapping
 </ol>
 <div class="gabarito"><b>Resposta: C</b> &mdash; A validação não ocorre na criação: o setting é apenas gravado, e quem tenta resolver a política é o serviço de ILM, em segundo plano. Verificado em teste: acknowledged: true na criação e step: ERROR no _ilm/explain. As alternativas A e D descrevem o comportamento defensivo que se esperaria; B parece inofensiva, mas o índice fica marcado como managed e nunca rotaciona.</div>
 </div>
+<div class="questao">
+<p class="enunciado">11. Uma chave <code>produto:10</code> existe como string. O que acontece ao executar <code>LPUSH produto:10 &quot;item&quot;</code>?</p>
+<ol>
+<li>chave é convertida em list e o item é inserido.</li>
+<li>O comando falha com WRONGTYPE e a chave permanece como string.</li>
+<li>chave é sobrescrita por uma list contendo apenas o item.</li>
+<li>O item é anexado ao fim da string, como um APPEND.</li>
+</ol>
+<div class="gabarito"><b>Resposta: B</b> &mdash; A chave carrega um tipo e comandos de outro tipo são recusados. As alternativas A e C são tentadoras porque o <code>SET</code> realmente sobrescreve qualquer chave — mas ele é a exceção, não a regra. D confunde <code>LPUSH</code> com <code>APPEND</code>.</div>
+</div>
+<div class="questao">
+<p class="enunciado">12. Um <code>TTL minha:chave</code> devolve <strong>-1</strong>. O que isso significa?</p>
+<ol>
+<li>chave não existe.</li>
+<li>chave existe e nunca vai expirar.</li>
+<li>chave expirou há menos de um segundo.</li>
+<li>Houve erro ao consultar o TTL.</li>
+</ol>
+<div class="gabarito"><b>Resposta: B</b> &mdash; -1 é &quot;existe, sem expiração&quot;; -2 é &quot;não existe&quot;. A alternativa A é a confusão mais comum, e ela importa: num rate limit, -1 significa contador eterno e usuário bloqueado para sempre, enquanto -2 significa que a janela já passou e o acesso deveria ser liberado.</div>
+</div>
+<div class="questao">
+<p class="enunciado">13. Uma transação <code>MULTI ... EXEC</code> tem três comandos e o segundo falha em tempo de execução. O que acontece?</p>
+<ol>
+<li>Os três comandos são desfeitos e o estado volta ao anterior.</li>
+<li>execução para no segundo comando e o terceiro não roda.</li>
+<li>O primeiro e o terceiro são aplicados; o EXEC devolve o erro na posição do segundo.</li>
+<li>O EXEC é recusado inteiro e nada é aplicado.</li>
+</ol>
+<div class="gabarito"><b>Resposta: C</b> &mdash; Não há rollback: o <code>EXEC</code> devolve um array em que cada posição é um resultado ou um erro, e os comandos que funcionaram ficam aplicados. A alternativa A descreve um banco relacional. D descreve o que ocorre com erro de <strong>sintaxe</strong>, detectado no enfileiramento — distinção que a questão cobra.</div>
+</div>
+<div class="questao">
+<p class="enunciado">14. Você publica em um canal com <code>PUBLISH</code> e o retorno é 0. O que isso indica?</p>
+<ol>
+<li>mensagem foi enfileirada e será entregue quando houver um assinante.</li>
+<li>Houve erro na publicação.</li>
+<li>Nenhum assinante estava conectado e a mensagem foi descartada.</li>
+<li>O canal não existe e precisa ser criado antes.</li>
+</ol>
+<div class="gabarito"><b>Resposta: C</b> &mdash; O retorno é a contagem de assinantes que receberam. Zero significa que ninguém ouvia e a mensagem deixou de existir — Pub/Sub não tem fila nem buffer. A alternativa A descreve uma Stream, que é justamente a estrutura a usar quando a perda é inaceitável. D é falsa: canais não precisam ser criados.</div>
+</div>
 <h3 style="margin-top:8mm">Tabela de decis&atilde;o</h3>
 <table><tr><th style="width:42%">Requisito</th><th style="width:16%">Sistema</th><th>Por qu&ecirc;</th></tr>
 <tr><td>Transação envolvendo múltiplos documentos, com garantia de tudo-ou-nada</td><td>MongoDB</td><td>Transações multi-documento com ACID desde a versão 4.0. O Elasticsearch não oferece transação.</td></tr>
@@ -1413,6 +2061,12 @@ GET meu_indice/_mapping
 <tr><td>Garantia de unicidade de um campo sob escrita concorrente</td><td>MongoDB</td><td>Índice único validado pelo servidor no momento da escrita, devolvendo E11000. O Elasticsearch só garante unicidade do _id.</td></tr>
 <tr><td>Correlacionar logs de vários serviços numa linha do tempo comum</td><td>Elasticsearch</td><td>É o caso de uso para o qual a stack foi desenhada — foi exatamente o que o Lab 2 montou.</td></tr>
 <tr><td>Fonte da verdade de qualquer dado de negócio</td><td>MongoDB</td><td>Índice de busca é derivado e descartável por princípio. Se ele for a fonte, toda evolução de mapping vira migração de risco, sem origem para reconstruir.</td></tr>
+<tr><td>Leitura de um valor conhecido em microssegundos, tolerando perdê-lo</td><td>Redis</td><td>Dados em memória e acesso por chave. MongoDB e Elasticsearch pagam disco e planejamento de consulta.</td></tr>
+<tr><td>Contador incrementado por muitos clientes ao mesmo tempo, sem perder contagem</td><td>Redis</td><td><code>INCR</code> é atômico no servidor. Ler-somar-gravar na aplicação perde incrementos sob concorrência.</td></tr>
+<tr><td>Dado temporário que deve sumir sozinho: sessão, token, rate limit, lock</td><td>Redis</td><td>TTL nativo por chave. Nos outros dois, expirar dado exige rotina própria ou política de ciclo de vida.</td></tr>
+<tr><td>Ranking consultado tanto pelo topo quanto pela posição de um participante</td><td>Redis</td><td>Sorted set responde <code>ZREVRANGE</code> e <code>ZREVRANK</code> sem varrer. Ordenar por agregação a cada consulta não escala.</td></tr>
+<tr><td>Fila de trabalhos que não pode perder mensagem se o consumidor reiniciar</td><td>Redis (Stream)</td><td>Consumer group mantém a mensagem pendente até o <code>XACK</code>. Pub/Sub e GELF/UDP descartam quando ninguém ouve.</td></tr>
+<tr><td>Contagem de elementos únicos em volume, com memória limitada</td><td>Redis (HyperLogLog)</td><td>~12 KB por contador com erro de ~0,81%. Um <code>SET</code> ou uma agregação <code>cardinality</code> crescem com o volume.</td></tr>
 </table>
 <h3 style="margin-top:8mm">Gloss&aacute;rio</h3><div class="glossario"><dl>
 <div class="verbete"><dt>BSON</dt><dd>Formato binário do MongoDB que estende o JSON com tipos como data, decimal128, binário e ObjectId.</dd></div>
@@ -1440,6 +2094,23 @@ GET meu_indice/_mapping
 <div class="verbete"><dt>RAG</dt><dd>Recuperação de trechos relevantes numa base de conhecimento para compor o contexto de um modelo de linguagem antes da geração.</dd></div>
 <div class="verbete"><dt>GELF</dt><dd>Graylog Extended Log Format; driver de log do Docker que envia a saída do contêiner por UDP a um coletor.</dd></div>
 <div class="verbete"><dt>ILM</dt><dd>Index Lifecycle Management: automatiza rollover, migração entre camadas de armazenamento e expurgo de índices.</dd></div>
+<div class="verbete"><dt>Data structure server</dt><dd>Servidor em que o valor associado à chave é uma estrutura manipulável no próprio servidor, e não um blob opaco.</dd></div>
+<div class="verbete"><dt>WRONGTYPE</dt><dd>Erro devolvido quando um comando é aplicado a uma chave de tipo incompatível; o Redis não converte tipos.</dd></div>
+<div class="verbete"><dt>TTL</dt><dd>Tempo restante de vida de uma chave. Devolve -1 se ela é permanente e -2 se não existe.</dd></div>
+<div class="verbete"><dt>SETEX</dt><dd>Grava valor e expiração numa única operação atômica, evitando o instante sem prazo do <code>SET</code> seguido de <code>EXPIRE</code>.</dd></div>
+<div class="verbete"><dt>Sorted set</dt><dd>Coleção de membros com score numérico, mantida ordenada a cada escrita; empates são desempatados pelo membro.</dd></div>
+<div class="verbete"><dt>Bitmap</dt><dd>String manipulada bit a bit, usada para representar um atributo booleano de muitas entidades em espaço mínimo.</dd></div>
+<div class="verbete"><dt>HyperLogLog</dt><dd>Estrutura probabilística que estima cardinalidade com ~0,81% de erro e memória limitada a cerca de 12 KB.</dd></div>
+<div class="verbete"><dt>PFMERGE</dt><dd>Une HyperLogLogs, permitindo obter únicos de um período a partir dos contadores de cada dia.</dd></div>
+<div class="verbete"><dt>Stream</dt><dd>Log append-only com IDs crescentes, que preserva os eventos e permite releitura — ao contrário do Pub/Sub.</dd></div>
+<div class="verbete"><dt>Consumer group</dt><dd>Mecanismo que distribui mensagens de uma Stream entre consumidores e mantém cada entrega pendente até o <code>XACK</code>.</dd></div>
+<div class="verbete"><dt>XPENDING</dt><dd>Lista as mensagens entregues a um consumer group e ainda não confirmadas.</dd></div>
+<div class="verbete"><dt>MULTI / EXEC</dt><dd>Enfileira comandos e os executa em bloco, sem intercalação de outros clientes — mas sem rollback.</dd></div>
+<div class="verbete"><dt>EVAL</dt><dd>Executa um script Lua no servidor como unidade atômica, permitindo ramificar conforme resultados intermediários.</dd></div>
+<div class="verbete"><dt>RDB</dt><dd>Persistência por snapshots periódicos do dataset; compacto e de recuperação rápida, perde o que veio depois do último.</dd></div>
+<div class="verbete"><dt>AOF</dt><dd>Persistência por log de comandos de escrita; maior em disco, recuperação mais lenta, perda limitada a ~1 s com <code>everysec</code>.</dd></div>
+<div class="verbete"><dt>Eviction</dt><dd>Política que decide quais chaves descartar ao atingir <code>maxmemory</code>; <code>noeviction</code> recusa escritas em vez de descartar.</dd></div>
+<div class="verbete"><dt>SCAN</dt><dd>Iteração incremental sobre o keyspace, com cursor, que não bloqueia o servidor como o <code>KEYS</code>.</dd></div>
 </dl></div>
 <h3 style="margin-top:8mm">Para ir al&eacute;m</h3><ul>
 <li>Documentação oficial do MongoDB, seção Aggregation Pipeline Optimization — explica quais reordenações o planejador faz sozinho e quais dependem de você.</li>
@@ -1448,6 +2119,10 @@ GET meu_indice/_mapping
 <li>Artigo original do HNSW (Malkov e Yashunin, 2016) — leitura acessível para quem quer entender por que a busca aproximada funciona.</li>
 <li>Documentação do Elasticsearch sobre Retrievers e RRF — a forma atual de fazer busca híbrida, que substitui a combinação manual por script_score usada no laboratório.</li>
 <li>MongoDB University, curso M201 (Performance) — gratuito, e cobre explain e estratégia de índices com muito mais profundidade do que um laboratório permite.</li>
+<li>Redis in Action (Josiah Carlson) — gratuito no site da Redis; a melhor introdução aos padrões de aplicação, com capítulos inteiros sobre filas, locks e contadores.</li>
+<li>Documentação oficial do Redis, seção Data types — cada tipo com a complexidade de cada comando, que é o que decide se ele serve ao seu volume.</li>
+<li>Artigo original do HyperLogLog (Flajolet et al., 2007) e o post de Salvatore Sanfilippo sobre a implementação no Redis — para entender de onde vem o erro de 0,81%.</li>
+<li>Documentação do Redis sobre Streams e consumer groups, incluindo <code>XCLAIM</code> e <code>XAUTOCLAIM</code>, que tratam o consumidor que morre sem confirmar.</li>
 </ul>
 </section>
 </body></html>

@@ -7,9 +7,9 @@
    "abertura": "O modelo relacional resolve bem um conjunto de problemas há cinquenta anos. A pergunta desta aula não é o que há de errado com ele — é que problemas apareceram depois que ele já estava consolidado, e por que exigiram estruturas diferentes.",
    "objetivos": [
     "Identificar as três pressões concretas que motivaram os bancos não relacionais: esquema móvel, escala horizontal e busca por relevância.",
-    "Situar MongoDB e Elasticsearch dentro da taxonomia NoSQL, sabendo dizer a que família cada um pertence.",
+    "Situar MongoDB, Elasticsearch e Redis dentro da taxonomia NoSQL, sabendo dizer a que família cada um pertence.",
     "Enunciar o teorema CAP com precisão, incluindo o que a versão popular dele distorce.",
-    "Sustentar a tese central da aula: os dois sistemas dos laboratórios não competem, se complementam."
+    "Sustentar a tese central da aula: os três sistemas dos laboratórios não competem entre si, ocupam camadas diferentes."
    ],
    "conceitos": [
     {
@@ -18,9 +18,9 @@
      "erro_comum": "Tratar NoSQL como categoria única e concluir que \"NoSQL não tem transação\" ou \"NoSQL não tem esquema\". O MongoDB tem transação multi-documento desde a versão 4.0 e permite validação de esquema por coleção. A generalização é falsa para praticamente qualquer afirmação."
     },
     {
-     "nome": "A taxonomia: cinco famílias, dois representantes",
-     "explicacao": "Chave-valor (Redis, DynamoDB) guarda um valor opaco sob uma chave e não sabe nada sobre o conteúdo. Documento (MongoDB, CouchDB) guarda estruturas aninhadas e sabe consultar campos dentro delas. Coluna larga (Cassandra, HBase) organiza por família de colunas e otimiza escrita em volume. Grafo (Neo4j) trata a relação como cidadã de primeira classe. Motor de busca (Elasticsearch, Solr) inverte o problema: em vez de ir do documento ao conteúdo, vai do termo aos documentos. Os dois laboratórios cobriram justamente as duas famílias mais usadas juntas.",
-     "analogia": "Chave-valor é o guarda-volumes: você entrega uma mala, recebe uma ficha, e ninguém olha dentro. Documento é o arquivo de pastas: cada pasta tem estrutura própria e dá para procurar por um campo específico. Motor de busca é o índice remissivo no fim do livro: ele não guarda o texto, guarda em que páginas cada palavra aparece."
+     "nome": "A taxonomia: cinco famílias, três representantes",
+     "explicacao": "Chave-valor (DynamoDB, Memcached) guarda um valor sob uma chave, em geral sem saber o que há dentro. Documento (MongoDB, CouchDB) guarda estruturas aninhadas e sabe consultar campos dentro delas. Coluna larga (Cassandra, HBase) organiza por família de colunas e otimiza escrita em volume. Grafo (Neo4j) trata a relação como cidadã de primeira classe. Motor de busca (Elasticsearch, Solr) inverte o problema: em vez de ir do documento ao conteúdo, vai do termo aos documentos. O Redis costuma ser classificado como chave-valor, mas a rigor escapa da caixa: o valor não é opaco, é uma estrutura que o servidor sabe manipular — daí o nome que ele próprio usa, data structure server. Os três laboratórios cobriram documento, motor de busca e chave-valor, justamente as famílias que mais aparecem juntas num mesmo sistema.",
+     "analogia": "Chave-valor clássico é o guarda-volumes: você entrega uma mala, recebe uma ficha, e ninguém olha dentro. Documento é o arquivo de pastas: cada pasta tem estrutura própria e dá para procurar por um campo específico. Motor de busca é o índice remissivo no fim do livro: não guarda o texto, guarda em que páginas cada palavra aparece. E o Redis é a mesa de trabalho: o que está ao alcance da mão agora, já organizado na forma em que vai ser usado."
     },
     {
      "nome": "ACID e BASE",
@@ -34,7 +34,7 @@
     },
     {
      "nome": "A tese desta aula",
-     "explicacao": "Os dois laboratórios não foram exercícios independentes. O Lab 2 montou, sem anunciar, uma arquitetura de produção clássica: o MongoDB do Lab 1 emitindo logs, o Logstash recebendo, o Elasticsearch indexando, o Kibana exibindo. Essa é a divisão de trabalho real: um sistema guarda a verdade com garantia de escrita; o outro constrói um índice derivado, otimizado para uma pergunta que o primeiro responde mal. Toda a aula vai voltar a esse ponto.",
+     "explicacao": "Os laboratórios não foram exercícios independentes. O Lab 2 montou, sem anunciar, uma arquitetura de produção clássica: o MongoDB do Lab 1 emitindo logs, o Logstash recebendo, o Elasticsearch indexando, o Kibana exibindo. O Lab 3 trouxe a terceira peça. A divisão de trabalho é esta: um sistema guarda a verdade com garantia de escrita; outro constrói um índice derivado, otimizado para uma pergunta que o primeiro responde mal; o terceiro mantém em memória o estado que precisa ser lido em microssegundos e que pode ser perdido sem tragédia. Toda a aula volta a esse ponto.",
      "analogia": "Uma biblioteca tem o acervo e tem o catálogo. O acervo é a verdade: se o catálogo sumir, reconstrói-se a partir dos livros. Se o acervo sumir, o catálogo vira uma lista de coisas que não existem mais. O Elasticsearch é o catálogo."
     }
    ],
@@ -547,20 +547,301 @@
    ]
   },
   {
-   "tema": "sintese",
-   "titulo": "Os dois juntos: sistema de registro e camada de busca",
-   "duracao_min": 30,
-   "abertura": "Os dois laboratórios pareciam exercícios separados. Não eram: juntos, eles montaram uma arquitetura que aparece em quase todo sistema de porte — e que responde à pergunta de quando usar cada banco com um \"os dois, em papéis diferentes\".",
+   "tema": "redis",
+   "titulo": "Redis: o servidor de estruturas de dados",
+   "duracao_min": 45,
+   "abertura": "Chamar o Redis de \"banco chave-valor\" é verdade e é insuficiente. A chave aponta para um valor, sim — mas esse valor é uma estrutura que o servidor sabe manipular. A diferença entre guardar um JSON e guardar um hash é a diferença entre trazer o dado para a aplicação e mandar a operação até o dado.",
    "objetivos": [
-    "Descrever o fluxo MongoDB → GELF → Logstash → Elasticsearch → Kibana e o papel de cada peça.",
-    "Explicar por que o acoplamento entre os dois sistemas é unidirecional e o que isso garante.",
-    "Avaliar a escolha de UDP para transporte de log, com suas vantagens e o que ela sacrifica.",
-    "Aplicar o critério de decisão entre os dois sistemas a requisitos concretos."
+    "Explicar por que o Redis é um servidor de estruturas de dados e não apenas um cache de strings.",
+    "Prever o resultado de um comando aplicado a uma chave do tipo errado.",
+    "Escolher entre string, hash, list, set e sorted set a partir da operação pretendida.",
+    "Usar TTL corretamente, distinguindo os três estados que o comando reporta.",
+    "Combinar corretamente as pontas de inserção e consumo de uma list para obter FIFO ou LIFO."
    ],
    "conceitos": [
     {
-     "nome": "O fluxo, peça por peça",
-     "explicacao": "O MongoDB escreve log na saída padrão, como qualquer processo. O driver de log GELF do Docker intercepta essa saída e a envia por UDP para a porta 12201. O Logstash escuta ali, aplica o pipeline configurado e escreve no Elasticsearch, num índice nomeado por data. O Kibana lê o Elasticsearch e apresenta. Nenhuma dessas peças conhece as outras além da vizinha imediata: trocar o Elasticsearch por outro destino exigiria mudar apenas o output do Logstash.",
+     "nome": "Data structure server: a operação vai até o dado",
+     "explicacao": "Num cache comum, incrementar um contador exige ler o valor, somar na aplicação e gravar de volta — três passos, duas viagens de rede e uma janela em que dois clientes podem ler o mesmo valor e gravar por cima um do outro. No Redis isso é um `INCR`, executado dentro do servidor, de forma atômica. O mesmo vale para acrescentar a uma lista, somar um ponto num ranking ou incrementar um campo de hash. É por isso que a estrutura importa: ela define que operações podem ser empurradas para o servidor.",
+     "analogia": "A diferença entre pedir o extrato inteiro ao banco para calcular seu saldo em casa e pedir ao banco o saldo. No segundo caso a conta é feita onde o dado mora."
+    },
+    {
+     "nome": "A chave é tipada, e o tipo não se converte",
+     "explicacao": "Toda chave no Redis carrega um tipo, definido no momento em que ela nasce. Um comando de outro tipo sobre ela é recusado com `WRONGTYPE`, sem conversão e sem sobrescrita. A exceção é o `SET`, que substitui a chave inteira, qualquer que fosse o tipo anterior — o que engana, porque dá a impressão de que o Redis é permissivo com tipos quando na verdade é estrito.",
+     "erro_comum": "Reaproveitar um nome de chave para outra estrutura. Se `user:1001` já existe como string, um `HSET user:1001` falha — e falha em tempo de execução, no ambiente onde a chave antiga existir, não no ambiente limpo onde o código foi testado."
+    },
+    {
+     "nome": "Strings guardam bytes, não caracteres",
+     "explicacao": "A string do Redis é uma sequência de bytes, e comandos como `STRLEN`, `APPEND` e `GETRANGE` operam em bytes. Em texto ASCII byte e caractere coincidem e a distinção passa despercebida; em português, não. Isso também significa que uma string do Redis pode guardar qualquer coisa — JSON, um protobuf, uma imagem — até 512 MB.",
+     "erro_comum": "Usar `GETRANGE` para cortar texto com acento e partir um caractere ao meio, produzindo bytes inválidos em UTF-8."
+    },
+    {
+     "nome": "TTL tem três respostas, não duas",
+     "explicacao": "O `TTL` devolve o número de segundos restantes quando há expiração, **-1** quando a chave existe mas é permanente, e **-2** quando a chave não existe. Tratar -1 e -2 como o mesmo \"sem TTL\" apaga a distinção entre \"está no cache para sempre\" e \"não está no cache\" — que são situações opostas. Outro ponto decisivo: escrever numa chave com `INCR` ou `APPEND` **não renova** o TTL, enquanto um `SET` sem cláusula de expiração o remove por completo.",
+     "erro_comum": "Atualizar uma sessão com `SET` sem repetir o `EX`. O TTL é descartado e a sessão passa a viver para sempre — um vazamento de memória que só aparece semanas depois."
+    },
+    {
+     "nome": "Hash: atualização parcial sem serializar",
+     "explicacao": "Guardar uma entidade como string JSON obriga a ler o documento inteiro, alterar na aplicação e regravar para mudar um campo — três operações e uma condição de corrida entre a leitura e a escrita. O hash resolve isso: cada campo é lido e escrito isoladamente, e o `HINCRBY` incrementa um campo numérico atomicamente. O custo é perder a capacidade de guardar estrutura aninhada, já que os valores do hash são escalares.",
+     "analogia": "JSON numa string é um formulário plastificado: para mudar um campo, imprime-se outro inteiro. O hash é o formulário com campos editáveis."
+    },
+    {
+     "nome": "List: a ponta de entrada decide a semântica",
+     "explicacao": "A list é uma lista duplamente ligada com inserção e remoção nas duas pontas. Não existe \"list FIFO\" ou \"list LIFO\" — o comportamento nasce da combinação escolhida. `LPUSH` com `RPOP` (ou `RPUSH` com `LPOP`) dá FIFO, uma fila: quem entra primeiro sai primeiro. Empurrar e consumir pela mesma ponta dá LIFO, uma pilha. O `LRANGE` apenas lê, sem consumir.",
+     "erro_comum": "Usar `RPUSH` para enfileirar e `RPOP` para consumir. É o erro mais comum com listas: o código parece uma fila, roda sem erro, e processa os trabalhos na ordem inversa. Com carga baixa ninguém nota; sob fila cheia, os itens mais antigos nunca são processados."
+    },
+    {
+     "nome": "Set: unicidade como resposta, não só como propriedade",
+     "explicacao": "O set garante elementos únicos, mas o detalhe útil é que o `SADD` devolve quantos membros **realmente entraram**. Um retorno 0 significa \"já estava lá\". Isso transforma o set num teste de duplicidade atômico: registrar um voto, um clique ou o processamento de uma mensagem e saber, na mesma operação, se aquilo já havia acontecido. Os comandos de conjunto — `SINTER`, `SUNION`, `SDIFF` — rodam no servidor.",
+     "erro_comum": "Supor que `SDIFF` é comutativo. `SDIFF A B` devolve o que está em A e não em B; trocar a ordem dá outro resultado."
+    },
+    {
+     "nome": "Sorted set: ordenação mantida a cada escrita",
+     "explicacao": "O sorted set associa um score numérico a cada membro e mantém a ordem continuamente, com custo logarítmico por operação. Ele responde tanto \"quais são os cinco primeiros\" quanto \"em que posição está o jogador X\" sem varrer a estrutura — a segunda pergunta é a que nenhuma outra estrutura responde bem. Empates em score são desempatados pelo membro, em ordem lexicográfica.",
+     "erro_comum": "Assumir que o desempate aparece igual nos dois sentidos. Como o `ZREVRANGE` percorre a estrutura ao contrário, o empate também sai invertido — detalhe que aparece quando dois competidores têm a mesma pontuação e a ordem exibida surpreende."
+    }
+   ],
+   "demos": [
+    {
+     "titulo": "A chave é tipada — e o roteiro do laboratório tropeça nisso",
+     "linguagem": "bash",
+     "codigo": "# Seção 5.1 do lab criou user:1001 como string:\nSET user:1001 \"João\"\nAPPEND user:1001 \" Silva\"\n\n# Seção 20 tenta usar a MESMA chave como hash:\nHSET user:1001 nome \"João\" idade 40 cidade \"Brasília\"",
+     "saida": "WRONGTYPE Operation against a key holding the wrong kind of value\n\nTYPE user:1001  ->  string\nGET  user:1001  ->  \"João Silva\"",
+     "explicacao": "O exercício integrador do roteiro não roda como está: a chave já existe com outro tipo. O diagnóstico é imediato com `TYPE`. A correção é remover a chave ou — melhor — não reaproveitar o nome, usando `user:nome:1001` para a string e `user:1001` para o hash.",
+     "fonte": "Lab 3, PARTE2-EVIDENCIAS.md, Seção 20"
+    },
+    {
+     "titulo": "STRLEN conta bytes",
+     "linguagem": "bash",
+     "codigo": "SET user:1001 \"João\"\nAPPEND user:1001 \" Silva\"\nSTRLEN user:1001",
+     "saida": "SET     -> OK\nAPPEND  -> 11\nSTRLEN  -> 11",
+     "explicacao": "\"João Silva\" tem 10 caracteres, mas 11 bytes: o \"ã\" ocupa 2 em UTF-8. O `APPEND` também devolve o comprimento em bytes. Em qualquer operação de recorte, é o byte que conta.",
+     "fonte": "Lab 3, PARTE1-EVIDENCIAS.md, Seção 5.1"
+    },
+    {
+     "titulo": "Os três estados do TTL",
+     "linguagem": "bash",
+     "codigo": "SET cache:home \"html-home\"\nTTL cache:home          # existe, sem expiração\nEXPIRE cache:home 30\nTTL cache:home          # existe, com expiração\nPERSIST cache:home\nTTL cache:home          # voltou a ser permanente\nDEL cache:home\nTTL cache:home          # não existe mais",
+     "saida": "-1\n30\n-1\n-2",
+     "explicacao": "Três situações, três respostas. O `PERSIST` remove a expiração e devolve a chave ao estado permanente. Uma camada de cache que trate -1 e -2 como iguais confunde \"guardado para sempre\" com \"não guardado\".",
+     "fonte": "Lab 3, PARTE1-EVIDENCIAS.md, Seções 4.1 e 4.5"
+    },
+    {
+     "titulo": "O erro clássico da list: a fila que anda ao contrário",
+     "linguagem": "bash",
+     "codigo": "RPUSH fila:etl \"job:extrair\" \"job:transformar\" \"job:validar\" \\\n               \"job:carregar\" \"job:notificar\"\nRPOP fila:etl\nRPOP fila:etl\nLRANGE fila:etl 0 -1",
+     "saida": "RPOP   -> \"job:notificar\"\nRPOP   -> \"job:carregar\"\nLRANGE -> \"job:extrair\", \"job:transformar\", \"job:validar\"",
+     "explicacao": "Enfileirou pela direita e consumiu pela direita: saíram os dois **últimos**, não os dois primeiros. O código não dá erro, a fila funciona, e os trabalhos mais antigos vão sendo empurrados para o fim da vida. Com `RPUSH` o consumo correto é `LPOP`.",
+     "fonte": "Lab 3, PARTE1-EVIDENCIAS.md, Exercício 5"
+    },
+    {
+     "titulo": "Empate em sorted set aparece invertido no ZREVRANGE",
+     "linguagem": "bash",
+     "codigo": "ZADD t:empate 8 \"Bruno\" 8 \"Carlos\" 8 \"Ana\"\nZRANGE    t:empate 0 -1 WITHSCORES\nZREVRANGE t:empate 0 -1 WITHSCORES",
+     "saida": "ZRANGE    -> Ana 8, Bruno 8, Carlos 8\nZREVRANGE -> Carlos 8, Bruno 8, Ana 8",
+     "explicacao": "Com scores iguais, o desempate é lexicográfico pelo membro. Como o `ZREVRANGE` percorre ao contrário, o empate também inverte. Num ranking de verdade isso significa que, entre empatados, quem tem nome mais ao fim do alfabeto aparece na frente — critério arbitrário que convém substituir por um score composto, por exemplo somando um desempate temporal.",
+     "fonte": "Lab 3, verificação isolada durante a execução"
+    }
+   ],
+   "fechamento": "O Redis não substitui os dois sistemas anteriores: ele responde a uma terceira pergunta, que é \"qual o estado agora, no menor tempo possível\". Escolher a estrutura certa é quase toda a decisão de projeto — e o preço de escolher errado aparece como comportamento estranho, não como erro. O próximo módulo mostra como essas estruturas viram padrões de aplicação.",
+   "perguntas": [
+    "Por que o SET aceita sobrescrever uma chave de qualquer tipo, mas o HSET não?",
+    "Sua sessão tem TTL de 30 minutos e é atualizada a cada requisição com SET. O que acontece com a expiração?",
+    "Você precisa saber se um e-mail já foi enviado para um usuário hoje. Que estrutura usa, e por quê?",
+    "Um ranking tem dois jogadores com 1500 pontos. Que critério o Redis usa para ordená-los, e isso é aceitável no seu caso?"
+   ]
+  },
+  {
+   "tema": "redis",
+   "titulo": "Redis: padrões de aplicação e atomicidade",
+   "duracao_min": 40,
+   "abertura": "Cache, sessão, contador, rate limit, fila e ranking são seis problemas diferentes que o Redis resolve com as mesmas estruturas do módulo anterior. O que muda é a combinação — e, em dois deles, a diferença entre funcionar e falhar está na atomicidade.",
+   "objetivos": [
+    "Implementar cache, sessão, contador, rate limit, fila e ranking com a estrutura adequada a cada um.",
+    "Identificar a janela de falha do rate limit implementado com dois comandos separados.",
+    "Explicar o que MULTI/EXEC garante e o que ele não garante.",
+    "Justificar quando um script Lua é necessário em vez de uma transação."
+   ],
+   "conceitos": [
+    {
+     "nome": "Cache e sessão: o TTL substitui a rotina de limpeza",
+     "explicacao": "Cache de página, sessão de usuário e token são todos o mesmo padrão: uma string com prazo. O ganho não é só de desempenho — é operacional. Sem TTL, alguém precisa escrever e manter um processo que varre o armazenamento apagando o que venceu; com TTL, o próprio Redis remove. Usar `SET ... EX` ou `SETEX` em vez de `SET` seguido de `EXPIRE` importa porque garante que não existe instante em que a chave esteja gravada sem prazo.",
+     "erro_comum": "Guardar no cache o resultado de uma consulta que pode ser inválida antes do TTL vencer. TTL controla idade, não correção: se o dado de origem mudar, o cache continua servindo o valor velho até expirar. Quando isso não é aceitável, é preciso invalidar explicitamente com `DEL` no momento da escrita."
+    },
+    {
+     "nome": "Contador: a razão de existir o INCR",
+     "explicacao": "Ler, somar e gravar é a implementação intuitiva de um contador e está errada sob concorrência: dois clientes leem 10, ambos gravam 11, e uma contagem se perde. O `INCR` executa a leitura e a escrita como uma operação indivisível dentro do servidor. Nenhum cliente consegue se intercalar. É o exemplo mais simples do princípio que organiza todo este módulo: empurrar a operação para onde o dado está elimina a corrida.",
+     "analogia": "É a diferença entre dois caixas anotando o total num papel compartilhado e uma catraca que conta sozinha. A catraca não erra porque não há intervalo entre ler e escrever."
+    },
+    {
+     "nome": "Rate limit: a janela de falha que a Seção 10.3 não conta",
+     "explicacao": "O padrão do roteiro é `INCR` seguido de `EXPIRE`: na primeira requisição o contador vai a 1 e ganha prazo de 60 segundos; nas seguintes apenas incrementa, e o TTL não é renovado, de modo que a janela conta a partir do primeiro acesso. Correto em regime normal. O problema está entre os dois comandos: se o processo da aplicação morrer ali, a chave fica sem TTL. Como o `INCR` nunca expira nada, aquele contador fica eterno — e o usuário passa a ser bloqueado para sempre, sem que nada no sistema indique a causa.",
+     "erro_comum": "Considerar o cenário improvável demais para tratar. Ele é raro por requisição e inevitável em escala: a um milhão de requisições por dia, uma janela de microssegundos acontece."
+    },
+    {
+     "nome": "MULTI/EXEC: enfileira, isola, mas não desfaz",
+     "explicacao": "Entre o `MULTI` e o `EXEC`, os comandos não são executados — são enfileirados, cada um respondendo `QUEUED`. O `EXEC` dispara todos em sequência, sem que nenhum comando de outro cliente se intercale. Isso dá isolamento e atomicidade de execução. O que **não** dá é rollback: se um comando falhar em tempo de execução, os demais são aplicados assim mesmo e não há como voltar atrás. Erros de sintaxe são diferentes — esses são detectados no enfileiramento e abortam a transação inteira.",
+     "erro_comum": "Tratar MULTI/EXEC como o BEGIN/COMMIT de um banco relacional e presumir que um erro no meio desfaz o resto. Não desfaz, e o estado fica parcialmente aplicado."
+    },
+    {
+     "nome": "A transação é uma propriedade da conexão",
+     "explicacao": "O `MULTI` abre um contexto naquela conexão específica. Enviar `MULTI` por uma conexão e `EXEC` por outra não forma transação alguma: o `EXEC` falha com `ERR EXEC without MULTI` e os comandos do meio já executaram soltos. Numa aplicação com pool de conexões, isso acontece sem que ninguém escreva nada de errado — basta o pool entregar conexões diferentes a cada chamada.",
+     "erro_comum": "Emitir os comandos de uma transação por meio de uma camada de abstração que não garante a mesma conexão. A biblioteca cliente precisa expor explicitamente o conceito de transação ou de conexão reservada."
+    },
+    {
+     "nome": "Lua: quando a lógica precisa decidir no meio",
+     "explicacao": "Um script Lua roda inteiro no servidor como unidade indivisível, e pode **ramificar**: ler um valor, decidir e escrever conforme o resultado. É exatamente o que o MULTI/EXEC não consegue, porque ele enfileira sem executar e portanto não tem acesso a nenhum resultado intermediário. O rate limit correto é essa ramificação: incrementa, e **se** for a primeira requisição da janela, define a expiração.",
+     "analogia": "MULTI/EXEC é entregar uma lista pronta de compras; o script Lua é mandar alguém ao mercado com autorização para decidir na hora."
+    }
+   ],
+   "demos": [
+    {
+     "titulo": "Rate limit: dois comandos contra um script",
+     "linguagem": "bash",
+     "codigo": "# Seção 10.3 — dois comandos, com janela de falha entre eles\nINCR rl:user:42\nEXPIRE rl:user:42 60\n\n# Seção 18 — um script, atômico\nEVAL \"local v = redis.call('INCR', KEYS[1])\n      if v == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end\n      return v\" 1 rl:ip:192.168.0.10 60",
+     "saida": "chamadas sucessivas do script -> 1, 2, 3\nTTL rl:ip:192.168.0.10        -> 60  (definido só na primeira)",
+     "explicacao": "O contador sobe a cada chamada; o `EXPIRE` só roda quando v == 1. O TTL não é renovado depois, então a janela conta do primeiro acesso. A diferença para a versão de dois comandos não é a viagem de rede economizada — é que desaparece o estado em que a chave existe sem prazo.",
+     "fonte": "Lab 3, PARTE1 Seção 10.3 e PARTE2 Seção 18"
+    },
+    {
+     "titulo": "MULTI/EXEC não faz rollback",
+     "linguagem": "bash",
+     "codigo": "SET nao:e:numero \"texto\"\n\nMULTI\nINCR nao:e:numero              # vai falhar: não é número\nSET  marcador:pos:erro \"fui gravado\"\nEXEC\n\nGET marcador:pos:erro",
+     "saida": "MULTI  -> OK\nINCR   -> QUEUED\nSET    -> QUEUED\nEXEC   -> 1) ERR value is not an integer or out of range\n          2) OK\n\nGET marcador:pos:erro -> \"fui gravado\"",
+     "explicacao": "O `INCR` falhou dentro do `EXEC` e o `SET` seguinte foi aplicado. O estado ficou parcial. Em um banco relacional o erro abortaria a transação inteira; aqui, o `EXEC` devolve um array em que cada posição pode ser um resultado ou um erro, e cabe à aplicação inspecionar.",
+     "fonte": "Lab 3, PARTE2-EVIDENCIAS.md, Seção 17"
+    },
+    {
+     "titulo": "A mesma transação, em conexões diferentes",
+     "linguagem": "bash",
+     "codigo": "# cada linha enviada por uma conexão distinta\nMULTI\nINCR pedidos:contador\nEXEC",
+     "saida": "MULTI -> OK\nINCR  -> 5        (executou solto, fora de transação)\nEXEC  -> ERR EXEC without MULTI",
+     "explicacao": "O `MULTI` morreu junto com sua conexão. O `INCR` não foi enfileirado: executou na hora e alterou o estado. O `EXEC` chegou a uma conexão que nunca abriu transação. Nenhum desses três comandos está errado isoladamente — o erro é de infraestrutura, e é por isso que ele escapa em revisão de código.",
+     "fonte": "Lab 3, PARTE2-EVIDENCIAS.md, Seção 17"
+    }
+   ],
+   "fechamento": "Os padrões deste módulo cobrem a maior parte do uso real do Redis. O fio que os liga é a atomicidade: sempre que uma operação lógica precisa de mais de um passo, é preciso decidir conscientemente se o passo intermediário pode ser observado ou interrompido. O próximo módulo sai do chave-valor e mostra o que mais cabe num servidor de estruturas.",
+   "perguntas": [
+    "Por que SETEX é preferível a SET seguido de EXPIRE, se o resultado final é o mesmo?",
+    "Seu rate limit usa INCR + EXPIRE há dois anos sem problema. Isso prova que a janela de falha não existe?",
+    "Quando MULTI/EXEC não serve e só um script Lua resolve?",
+    "Um usuário reclama que está bloqueado há dias pelo rate limit. Como você investiga?"
+   ]
+  },
+  {
+   "tema": "redis",
+   "titulo": "Redis além do chave-valor: probabilísticos, streams e durabilidade",
+   "duracao_min": 40,
+   "abertura": "Bitmap, HyperLogLog e geoespacial parecem recursos exóticos até se perceber o que têm em comum: cada um troca uma garantia por ordens de grandeza de memória. E as Streams resolvem o problema que o Pub/Sub deixa em aberto desde que foi apresentado.",
+   "objetivos": [
+    "Estimar o custo de memória de um bitmap e de um HyperLogLog e dizer o que cada um perde.",
+    "Reconhecer que os comandos geoespaciais são um sorted set com outra interface.",
+    "Escolher entre Pub/Sub e Streams a partir da garantia de entrega exigida.",
+    "Comparar RDB e AOF e prever o que sobrevive a um reinício.",
+    "Relacionar política de eviction com a presença ou ausência de TTL nas chaves."
+   ],
+   "conceitos": [
+    {
+     "nome": "Bitmap: um bit por entidade",
+     "explicacao": "O bitmap não é um tipo próprio — é uma string manipulada bit a bit por `SETBIT`, `GETBIT` e `BITCOUNT`. Usando o identificador do usuário como índice do bit, representa-se um atributo booleano de toda a base num espaço minúsculo: presença no dia, usuário ativo, participação numa campanha. O tamanho é determinado pelo maior índice usado, e bits nunca escritos valem 0 sem erro.",
+     "erro_comum": "Esquecer que o `SETBIT` devolve o valor **anterior** do bit, não o novo. Quem lê o retorno como confirmação interpreta 0 como falha."
+    },
+    {
+     "nome": "HyperLogLog: cardinalidade sem guardar os elementos",
+     "explicacao": "O HyperLogLog responde \"quantos distintos\" com erro em torno de 0,81% e memória limitada a cerca de 12 KB, independentemente de conter três ou trezentos milhões de valores. Ele não guarda os elementos — guarda um resumo estatístico. Por isso não é possível perguntar se um usuário específico está lá, nem fazer interseção entre dois HLLs. O que é possível, e muito útil, é o `PFMERGE`: unir contadores diários para obter os únicos da semana, algo que somar as contagens diárias jamais daria certo, porque contaria repetido quem voltou.",
+     "analogia": "É a diferença entre a lista de presença e o contador da catraca. A lista diz quem entrou; a catraca diz quantos, ocupa quase nada e não permite conferir um nome."
+    },
+    {
+     "nome": "Geoespacial é um sorted set disfarçado",
+     "explicacao": "Os comandos `GEOADD`, `GEODIST` e `GEOSEARCH` não criam um tipo novo. A coordenada é convertida num geohash de 52 bits que vira o score de um sorted set comum — e é a ordenação desse score que torna a busca por proximidade eficiente, porque pontos geograficamente próximos recebem geohashes numericamente próximos. Dá para confirmar rodando `TYPE` sobre a chave: o resultado é `zset`.",
+     "erro_comum": "Inverter longitude e latitude no `GEOADD`. A ordem é longitude primeiro, ao contrário de como se costuma escrever coordenadas. O Redis aceita sem reclamar e o ponto vai parar em outro continente."
+    },
+    {
+     "nome": "Pub/Sub entrega a quem está ouvindo; Stream guarda",
+     "explicacao": "O `PUBLISH` devolve quantos assinantes receberam a mensagem. Se for zero, a mensagem simplesmente deixou de existir — não há fila, buffer ou repetição. A Stream é o oposto: um log append-only, com ID crescente por evento, que permite reler o histórico a qualquer momento. Com consumer groups, cada mensagem entregue fica **pendente** até ser confirmada com `XACK`; se o consumidor morrer antes de confirmar, a mensagem continua na lista de pendências e outro consumidor pode assumi-la.",
+     "erro_comum": "Usar Pub/Sub para algo que não pode ser perdido — disparo de e-mail, baixa de estoque, notificação de pagamento. Funciona em teste, com o consumidor ligado, e perde mensagens em produção toda vez que o consumidor reinicia."
+    },
+    {
+     "nome": "RDB e AOF respondem a perguntas diferentes",
+     "explicacao": "O RDB grava snapshots binários do dataset inteiro em intervalos configurados: arquivo compacto, recuperação rápida, e perda de tudo que foi escrito desde o último snapshot. O AOF registra cada comando de escrita num log: arquivo maior, recuperação mais lenta porque reexecuta o log, e perda limitada a cerca de um segundo com `appendfsync everysec`. Não são excludentes — é comum manter os dois, o RDB como backup para copiar e o AOF como garantia de durabilidade.",
+     "erro_comum": "Supor que o Redis persiste por padrão na imagem oficial. O AOF vem desligado; sem habilitá-lo, a durabilidade depende apenas dos snapshots RDB."
+    },
+    {
+     "nome": "CONFIG SET aplica agora e esquece depois",
+     "explicacao": "O `CONFIG SET` altera a configuração do processo em execução, imediatamente. Ele não escreve no arquivo de configuração: ao reiniciar, tudo volta ao que estava declarado no `redis.conf` ou nos argumentos de inicialização. Isso é ótimo para experimentar e péssimo como forma de configurar em definitivo.",
+     "erro_comum": "Resolver um incidente ajustando `maxmemory` com `CONFIG SET`, não registrar a mudança na configuração persistente, e ver o mesmo incidente voltar no próximo reinício — meses depois, quando ninguém lembra do ajuste."
+    },
+    {
+     "nome": "Eviction: o que o Redis faz quando a memória acaba",
+     "explicacao": "Atingido o `maxmemory`, a política decide o destino. `noeviction`, o padrão, recusa novas escritas com erro e mantém as leituras — seguro para dado que não pode sumir, catastrófico para um cache, que para de aceitar itens. `allkeys-lru` descarta as chaves usadas há mais tempo, com ou sem TTL. `volatile-lru` faz o mesmo apenas entre as chaves que têm TTL, protegendo o que é permanente. A escolha depende de a instância ser cache puro ou misturar cache e dado durável.",
+     "erro_comum": "Usar `allkeys-lru` numa instância que mistura cache e dado permanente. O Redis descartará o dado permanente sem qualquer aviso quando a memória apertar."
+    }
+   ],
+   "demos": [
+    {
+     "titulo": "Bitmap: 1.004 usuários em 126 bytes",
+     "linguagem": "bash",
+     "codigo": "SETBIT presenca:2026-03-15 1001 1\nSETBIT presenca:2026-03-15 1002 1\nSETBIT presenca:2026-03-15 1003 0\nBITCOUNT presenca:2026-03-15\nSTRLEN   presenca:2026-03-15\nGETBIT   presenca:2026-03-15 9999",
+     "saida": "SETBIT   -> 0, 0, 0    (valor anterior de cada bit)\nBITCOUNT -> 2\nSTRLEN   -> 126\nGETBIT   -> 0",
+     "explicacao": "O bit de índice 1003 força a string a ter ceil(1004/8) = 126 bytes, e nesse espaço cabem 1.008 flags. Uma lista dos IDs presentes custaria vários bytes por usuário. O bit de índice 9999, nunca escrito, devolve 0 sem erro — o bitmap só aloca até o maior índice usado.",
+     "fonte": "Lab 3, PARTE2-EVIDENCIAS.md, Seção 13"
+    },
+    {
+     "titulo": "HyperLogLog: unindo janelas de tempo",
+     "linguagem": "bash",
+     "codigo": "PFADD hll:dia1 \"u1\" \"u2\" \"u3\"\nPFADD hll:dia2 \"u3\" \"u4\" \"u5\"\nPFMERGE hll:total hll:dia1 hll:dia2\nPFCOUNT hll:total\nSTRLEN  hll:total",
+     "saida": "PFCOUNT -> 5\nSTRLEN  -> 31",
+     "explicacao": "Seis inserções, cinco únicos — u3 aparece nos dois dias e conta uma vez. Somar as contagens diárias daria 6, errado. Com poucos elementos o Redis usa codificação esparsa e o contador ocupa 31 bytes; ele cresce até um teto de cerca de 12 KB e para de crescer, não importa quantos milhões de valores distintos entrem depois.",
+     "fonte": "Lab 3, PARTE2-EVIDENCIAS.md, Seção 14"
+    },
+    {
+     "titulo": "Geo é zset: a prova",
+     "linguagem": "bash",
+     "codigo": "GEOADD cidades:df -47.8825 -15.7942 \"Brasilia\"\nGEOADD cidades:df -48.0770 -15.6014 \"Taguatinga\"\nGEODIST cidades:df \"Brasilia\" \"Taguatinga\" km\nGEOSEARCH cidades:df FROMLONLAT -47.8825 -15.7942 BYRADIUS 10 km WITHDIST\n\nTYPE   cidades:df\nZSCORE cidades:df \"Brasilia\"",
+     "saida": "GEODIST   -> 29.8936\nGEOSEARCH -> Brasilia 0.0003, LagoSul 5.2386   (Taguatinga ficou fora do raio)\nTYPE      -> zset\nZSCORE    -> 965555706610042",
+     "explicacao": "Quase 30 km entre Brasília e Taguatinga, e com raio de 10 km Taguatinga sai do resultado. O `TYPE` revela o que há por baixo: um sorted set cujo score é o geohash de 52 bits da coordenada. Todo comando GEO é açúcar sintático sobre operações de zset.",
+     "fonte": "Lab 3, PARTE2-EVIDENCIAS.md, Seção 15"
+    },
+    {
+     "titulo": "Stream: a mensagem fica pendente até ser confirmada",
+     "linguagem": "bash",
+     "codigo": "XGROUP CREATE stream:pedidos grupo:processadores 0 MKSTREAM\nXREADGROUP GROUP grupo:processadores consumidor:1 COUNT 10 \\\n           STREAMS stream:pedidos >\nXPENDING stream:pedidos grupo:processadores\n\nXACK stream:pedidos grupo:processadores 1790540869274-0\nXPENDING stream:pedidos grupo:processadores",
+     "saida": "XPENDING antes -> 2 mensagens pendentes\nXACK           -> 1\nXPENDING depois-> 1 mensagem pendente",
+     "explicacao": "O `>` pede apenas mensagens nunca entregues ao grupo — repetir o comando devolve vazio. As entregues ficam pendentes até o `XACK`. Se o consumidor morrer agora, a mensagem restante não se perde: outro consumidor pode reivindicá-la. É precisamente a garantia que o Pub/Sub não tem, onde publicar sem assinante devolve 0 e a mensagem desaparece.",
+     "fonte": "Lab 3, PARTE2-EVIDENCIAS.md, Seção 12"
+    },
+    {
+     "titulo": "O reinício que prova duas coisas de uma vez",
+     "linguagem": "bash",
+     "codigo": "# antes do reinício\nCONFIG SET maxmemory 512mb\nCONFIG SET maxmemory-policy allkeys-lru\nSET persist:test \"ok\"\n\n$ docker restart redis\n\n# depois\nGET persist:test\nCONFIG GET maxmemory\nCONFIG GET maxmemory-policy",
+     "saida": "GET persist:test      -> \"ok\"           (o dado sobreviveu)\nCONFIG GET maxmemory  -> 0              (voltou ao padrão)\nCONFIG GET maxmemory-policy -> noeviction",
+     "explicacao": "O dado persistiu porque o AOF foi habilitado nos argumentos do contêiner — configuração declarada, que sobrevive. Os 512 MB e o `allkeys-lru`, definidos por `CONFIG SET`, evaporaram. A lição está no contraste: o que está declarado persiste, o que foi ajustado em tempo de execução não.",
+     "fonte": "Lab 3, PARTE2-EVIDENCIAS.md, Seções 16.3 e 19"
+    }
+   ],
+   "fechamento": "O Redis vai muito além do cache de strings, e o fio comum das estruturas deste módulo é a troca consciente: bitmap e HyperLogLog trocam detalhe por memória; Stream troca simplicidade por garantia; RDB troca durabilidade por compactação. Saber o que se está abrindo mão é a competência real. Falta agora juntar os três sistemas da disciplina.",
+   "perguntas": [
+    "Você precisa saber quantos usuários únicos acessaram o site no mês. HyperLogLog ou Set? O que muda na resposta se depois pedirem a lista de quem acessou?",
+    "Por que um bitmap de presença com IDs de usuário esparsos (1, 5000, 900000) pode ser um desperdício?",
+    "Sua fila de e-mails usa Pub/Sub e alguns e-mails não são enviados. Qual a causa provável?",
+    "Uma instância guarda cache e também locks distribuídos. Que política de eviction você escolhe?"
+   ]
+  },
+  {
+   "tema": "sintese",
+   "titulo": "Os três juntos: registro, busca e latência",
+   "duracao_min": 35,
+   "abertura": "Os três laboratórios pareciam exercícios separados. Não eram: juntos, eles montam a arquitetura que aparece em quase todo sistema de porte — e respondem à pergunta de qual banco usar com um \"os três, em camadas diferentes\".",
+   "objetivos": [
+    "Descrever o fluxo MongoDB → GELF → Logstash → Elasticsearch → Kibana e o papel de cada peça.",
+    "Explicar por que o acoplamento entre os sistemas é unidirecional e o que isso garante.",
+    "Avaliar a escolha de UDP para transporte de log, com o que ela ganha e o que sacrifica.",
+    "Posicionar o Redis como camada de latência e reconhecer o problema de invalidação que ele cria.",
+    "Aplicar o critério de decisão entre os três sistemas a requisitos concretos."
+   ],
+   "conceitos": [
+    {
+     "nome": "O fluxo do Lab 2, peça por peça",
+     "explicacao": "O MongoDB escreve log na saída padrão, como qualquer processo. O driver de log GELF do Docker intercepta essa saída e a envia por UDP para a porta 12201. O Logstash escuta ali, aplica o pipeline configurado e escreve no Elasticsearch, num índice nomeado por data. O Kibana lê o Elasticsearch e apresenta. Nenhuma peça conhece as outras além da vizinha imediata: trocar o Elasticsearch por outro destino exigiria mudar apenas o output do Logstash.",
      "analogia": "Uma esteira de triagem postal. Cada posto sabe de onde recebe e para onde entrega, e nenhum precisa conhecer o percurso inteiro."
     },
     {
@@ -569,29 +850,39 @@
      "erro_comum": "Inverter a dependência, fazendo a aplicação escrever primeiro no Elasticsearch e depois no banco principal. Qualquer indisponibilidade da busca passa a derrubar a escrita."
     },
     {
-     "nome": "UDP: a escolha que troca garantia por isolamento",
-     "explicacao": "GELF sobre UDP não estabelece conexão nem confirma entrega. A consequência boa é que o contêiner sobe e opera mesmo com o Logstash fora do ar — os pacotes são simplesmente descartados e nada bloqueia. A consequência ruim é que não há garantia: sob perda de rede ou sobrecarga, linhas de log somem sem aviso. Para telemetria é um compromisso razoável; para auditoria, não. Auditoria exige transporte confiável e confirmação de entrega.",
-     "erro_comum": "Usar o mesmo pipeline de log best-effort para trilha de auditoria com valor legal. O dia em que faltar a linha crítica, não haverá como saber se ela nunca existiu ou se foi perdida."
+     "nome": "UDP: troca garantia por isolamento",
+     "explicacao": "GELF sobre UDP não estabelece conexão nem confirma entrega. A consequência boa é que o contêiner sobe e opera mesmo com o Logstash fora do ar — os pacotes são descartados e nada bloqueia. A ruim é que não há garantia: sob perda de rede ou sobrecarga, linhas de log somem sem aviso. Para telemetria o compromisso é razoável; para auditoria, não. Repare que é a mesma escolha do Pub/Sub do Redis: entrega a quem está ouvindo, e quem não estava perdeu.",
+     "erro_comum": "Usar um pipeline best-effort para trilha de auditoria com valor legal. No dia em que faltar a linha crítica, não haverá como saber se ela nunca existiu ou se foi perdida."
     },
     {
-     "nome": "O índice de busca nunca é a fonte da verdade",
-     "explicacao": "Este é o princípio que organiza tudo. O Elasticsearch é um índice derivado: se for perdido, reconstrói-se reindexando a partir da fonte. Se a fonte for perdida, o índice vira uma coleção de afirmações sobre dados que não existem mais. Isso tem consequência prática de projeto: todo pipeline de indexação precisa ser reexecutável do zero, e a decisão de \"gravar só no Elasticsearch porque é mais rápido\" deve ser recusada por padrão.",
-     "analogia": "O acervo e o catálogo da biblioteca. Perder o catálogo é trabalhoso; perder o acervo é irreversível."
+     "nome": "A terceira camada: latência",
+     "explicacao": "MongoDB responde \"qual o estado deste registro, com garantia\". Elasticsearch responde \"que documentos são relevantes para esta pergunta\". Redis responde \"qual o valor agora, no menor tempo possível\" — e aceita perdê-lo. As três perguntas exigem estruturas de dados diferentes, e é por isso que nenhum sistema responde bem às três. O Redis não é um banco menor: é um banco com outro compromisso, em que a memória volátil é característica de projeto e não limitação.",
+     "analogia": "A biblioteca tem o acervo, o catálogo e a mesa onde os livros em uso ficam abertos. Perder a mesa custa alguns minutos; perder o catálogo custa um mutirão; perder o acervo é irreversível."
+    },
+    {
+     "nome": "O índice de busca e o cache nunca são a fonte da verdade",
+     "explicacao": "Este é o princípio que organiza tudo. Elasticsearch e Redis são derivados: se forem perdidos, reconstroem-se a partir da fonte. Se a fonte for perdida, viram uma coleção de afirmações sobre dados que não existem mais. Daí duas consequências de projeto: todo pipeline de indexação precisa ser reexecutável do zero, e todo cache precisa tolerar estar vazio — se o sistema não funciona com o cache frio, ele não tem um cache, tem uma dependência.",
+     "erro_comum": "Gravar no Redis algo que não existe em nenhum outro lugar — um contador de uso faturável, o estado de um carrinho. No dia do reinício sem persistência, o dado simplesmente não volta."
+    },
+    {
+     "nome": "A invalidação, que é o preço do cache",
+     "explicacao": "Cachear é duplicar, e toda duplicata pode divergir. O TTL limita por quanto tempo a divergência dura, mas não a impede: se o registro mudar no MongoDB, o Redis continua servindo o valor antigo até o prazo vencer. Quando isso não é tolerável, é preciso invalidar explicitamente no momento da escrita — apagar a chave no mesmo fluxo que atualiza o banco. É por isso que a famosa frase sobre as duas coisas difíceis em computação cita nomear coisas e invalidar cache.",
+     "erro_comum": "Escolher um TTL longo por medo de sobrecarregar o banco e conviver com dados desatualizados que ninguém consegue explicar. O TTL é um limite superior para a inconsistência — defini-lo é decidir quanta divergência se aceita."
     },
     {
      "nome": "O critério de escolha, sem falso dilema",
-     "explicacao": "A pergunta útil não é \"qual banco é melhor\", é \"que pergunta este dado precisa responder, e com que garantia\". Estado atual de um registro, com escrita confirmada e possibilidade de transação: MongoDB. Relevância em texto livre, agregação exploratória sobre volume, busca semântica: Elasticsearch. Quando um sistema precisa das duas coisas — e a maioria precisa — a resposta é os dois, com fluxo de sincronização explícito e a verdade morando em um só lugar.",
-     "erro_comum": "Escolher um único sistema para tudo e depois forçá-lo no papel para o qual não foi feito: implementar busca por relevância com regex no MongoDB, ou tratar o Elasticsearch como banco transacional."
+     "explicacao": "A pergunta útil não é \"qual banco é melhor\", é \"que pergunta este dado precisa responder, com que garantia e em quanto tempo\". Estado atual com escrita confirmada e transação: MongoDB. Relevância em texto livre, agregação exploratória, busca semântica: Elasticsearch. Leitura em microssegundos, contador atômico, estado efêmero com prazo: Redis. Quando um sistema precisa das três coisas — e a maioria precisa —, a resposta é os três, com fluxo de sincronização explícito e a verdade morando em um só lugar.",
+     "erro_comum": "Escolher um único sistema para tudo e depois forçá-lo no papel para o qual não foi feito: busca por relevância com regex no MongoDB, banco transacional no Elasticsearch, ou dado de negócio que só existe no Redis."
     }
    ],
    "demos": [
     {
-     "titulo": "O pipeline em treze linhas",
+     "titulo": "O pipeline do Lab 2 em treze linhas",
      "linguagem": "json",
      "codigo": "# lab02-elastic/logstash/pipeline/logstash.conf\ninput {\n  gelf { port => 12201 }\n}\n\noutput {\n  elasticsearch {\n    hosts => [\"http://elasticsearch:9200\"]\n    index => \"mongodb-logs-%{+YYYY.MM.dd}\"\n  }\n  stdout { codec => rubydebug }\n}",
      "saida": "health status index                   docs.count\nyellow open   mongodb-logs-2026.09.08        160\nyellow open   mongodb-logs-2026.09.09         86",
-     "explicacao": "Dois índices, um por dia — a rotação vem do padrão de data no nome. É exatamente esse formato que justifica o index template do Módulo 6: índices que nascem sozinhos precisam de mapping declarado antes.",
-     "fonte": "lab02-elastic/logstash/pipeline/logstash.conf; estado do cluster em 09/09/2026"
+     "explicacao": "Dois índices, um por dia — a rotação vem do padrão de data no nome. É exatamente esse formato que justifica o index template: índices que nascem sozinhos precisam de mapping declarado antes.",
+     "fonte": "lab02-elastic/logstash/pipeline/logstash.conf"
     },
     {
      "titulo": "A prova de que o acoplamento é de um lado só",
@@ -602,24 +893,33 @@
      "fonte": "Reorganização do repositório, 08/09/2026"
     },
     {
-     "titulo": "A mesma pergunta nos dois sistemas",
+     "titulo": "A mesma pergunta nos três sistemas",
      "linguagem": "javascript",
-     "codigo": "// MongoDB — quantos documentos por categoria\ndb.transacoes.aggregate([\n  { $group: { _id: \"$tipo\", total: { $sum: 1 } } }\n]);\n\n// Elasticsearch — a mesma pergunta\nGET transacoes/_search\n{ \"size\": 0, \"aggs\": { \"por_tipo\": { \"terms\": { \"field\": \"tipo\" } } } }",
-     "saida": "MongoDB:       [ { _id: \"compra\", total: 12 }, { _id: \"venda\", total: 10 } ]\nElasticsearch: [ { key: \"compra\", doc_count: 12 }, { key: \"venda\", doc_count: 10 } ]",
-     "explicacao": "Mesma resposta, vocabulário diferente. A distinção entre os dois sistemas não está em agregar — os dois agregam bem. Está no que cada um faz com texto: só o Elasticsearch ordena por relevância, e só o MongoDB garante a escrita que originou o dado.",
-     "fonte": "GABARITO.md Parte 12 e PARTE2-EVIDENCIAS.md seção 12.9"
+     "codigo": "// MongoDB — agregar por categoria\ndb.transacoes.aggregate([\n  { $group: { _id: \"$tipo\", total: { $sum: 1 } } }\n]);\n\n// Elasticsearch — a mesma pergunta\nGET transacoes/_search\n{ \"size\": 0, \"aggs\": { \"por_tipo\": { \"terms\": { \"field\": \"tipo\" } } } }\n\n// Redis — a contagem ja pronta, mantida a cada escrita\nINCR transacoes:tipo:compra\nGET  transacoes:tipo:compra",
+     "saida": "MongoDB:       [ { _id: \"compra\", total: 12 }, { _id: \"venda\", total: 10 } ]\nElasticsearch: [ { key: \"compra\", doc_count: 12 }, { key: \"venda\", doc_count: 10 } ]\nRedis:         \"12\"",
+     "explicacao": "Os dois primeiros **calculam** a resposta no momento da pergunta, percorrendo os dados. O Redis não calcula nada: devolve um número que foi mantido atualizado a cada escrita. É a troca central da camada de latência — trabalho antecipado na escrita em troca de leitura constante. O custo é que esse contador pode divergir se alguma escrita não passar pelo caminho que o incrementa.",
+     "fonte": "GABARITO.md Parte 12, PARTE2-EVIDENCIAS.md 12.9 e Lab 3 Seção 5.3"
+    },
+    {
+     "titulo": "A arquitetura completa, nos contêineres",
+     "linguagem": "bash",
+     "codigo": "$ docker ps --format \"table {{.Names}}\\t{{.Status}}\"",
+     "saida": "NAMES               STATUS\nredis               Up (healthy)\nredisinsight        Up\nelasticsearch       Up (healthy)\nkibana              Up\nlogstash            Up\nmongodb-container   Up",
+     "explicacao": "Seis contêineres, três bancos, três papéis. Nenhum dado de negócio é escrito diretamente no Elasticsearch ou no Redis: tudo que chega neles foi derivado de outra fonte. Essa frase é o resumo da disciplina inteira.",
+     "fonte": "Ambiente dos Labs 1, 2 e 3"
     }
    ],
-   "fechamento": "A competência que esta aula pretende deixar não é sintaxe de nenhum dos dois — isso está na documentação. É saber formular a pergunta certa diante de um requisito: que garantia este dado exige, que pergunta ele precisa responder, e onde mora a verdade. Respondido isso, a escolha da ferramenta é quase automática.",
+   "fechamento": "A competência que esta aula pretende deixar não é sintaxe de nenhum dos três — isso está na documentação. É saber formular a pergunta certa diante de um requisito: que garantia este dado exige, em quanto tempo ele precisa ser lido, que pergunta ele precisa responder, e onde mora a verdade. Respondido isso, a escolha da ferramenta é quase automática — e, com mais frequência do que parece, a resposta certa é mais de uma.",
    "perguntas": [
-    "Se o Elasticsearch é descartável e reconstruível, por que fazer backup dele?",
+    "Se o Elasticsearch e o Redis são reconstruíveis, por que fazer backup deles?",
     "Sua aplicação precisa que uma alteração no MongoDB apareça na busca em menos de um segundo. O pipeline de log serve? O que você usaria?",
-    "Que perguntas você faria a um time que propõe migrar do PostgreSQL para o MongoDB?",
+    "Você cacheia no Redis o perfil do usuário com TTL de 1 hora. O usuário troca a foto e reclama que a antiga continua aparecendo. O que fazer, e qual o custo de cada alternativa?",
+    "Que perguntas você faria a um time que propõe guardar o carrinho de compras apenas no Redis?",
     "Onde mora a fonte da verdade no sistema em que você trabalha ou estuda, e como você sabe disso?"
    ]
   }
  ],
- "duracao_total_min": 300,
+ "duracao_total_min": 430,
  "armadilhas": [
   {
    "titulo": "A imagem mongo:4.4 do roteiro não sobe em kernel moderno",
@@ -700,6 +1000,66 @@
    "correcao": "Trocar # por // e usar a forma de função dos comandos de shell no playground.",
    "licao": "O mongosh parece um shell mas é um interpretador JavaScript. Saber qual linguagem está sendo interpretada evita uma classe inteira de erros que parecem inexplicáveis.",
    "evidencia": "show dbs  ->  SyntaxError no playground   |   db.getMongo().getDBNames()  ->  funciona"
+  },
+  {
+   "titulo": "A chave é tipada: o exercício integrador do roteiro não roda",
+   "sistema": "Redis",
+   "sintoma": "O primeiro comando da Seção 20 falha com `WRONGTYPE Operation against a key holding the wrong kind of value`, e o exercício integrador para antes de começar.",
+   "causa_raiz": "A Seção 5.1 já havia criado `user:1001` como string (`SET` seguido de `APPEND`). A Seção 20 tenta usar o mesmo nome como hash. No Redis toda chave carrega um tipo e um comando de outro tipo é recusado — não há conversão nem sobrescrita. A lista de limpeza da Seção 23 também não apaga essa chave entre uma seção e outra.",
+   "diagnostico": "`TYPE user:1001` devolve `string`, e `GET user:1001` mostra o valor deixado pela Seção 5.1.",
+   "correcao": "No laboratório, `DEL user:1001` antes do `HSET` — comando que não está no roteiro. Em código de verdade, não reaproveitar o nome: `user:nome:1001` para a string e `user:1001` para o hash.",
+   "licao": "O `SET` sobrescreve qualquer chave sem reclamar, o que passa a impressão de que o Redis é permissivo com tipos. Não é: `HSET`, `LPUSH`, `SADD` e `ZADD` exigem a chave inexistente ou já do tipo certo. O erro só aparece no ambiente onde a chave antiga existir — nunca no ambiente limpo em que o código foi testado.",
+   "evidencia": "HSET user:1001 nome \"João\" ... -> WRONGTYPE Operation against a key holding the wrong kind of value\nTYPE user:1001                 -> string\nGET  user:1001                 -> \"João Silva\""
+  },
+  {
+   "titulo": "A fila que processa ao contrário",
+   "sistema": "Redis",
+   "sintoma": "Uma fila de trabalhos entrega os itens na ordem inversa. Nenhum erro, nenhum log — os trabalhos mais antigos simplesmente vão sendo empurrados para o fim e podem nunca ser processados se a fila nunca esvaziar.",
+   "causa_raiz": "Inserção e consumo pela mesma ponta. `RPUSH` com `RPOP` é uma pilha (LIFO), não uma fila. A list do Redis não tem semântica própria: FIFO ou LIFO nasce da combinação de comandos escolhida.",
+   "diagnostico": "Um `LRANGE chave 0 -1` antes e depois do consumo mostra de que ponta os itens estão saindo.",
+   "correcao": "`RPUSH` para enfileirar e `LPOP` para consumir — ou `LPUSH` com `RPOP`. O que importa é que as pontas sejam opostas.",
+   "licao": "Estruturas simétricas exigem convenção explícita. Vale fixar uma combinação em todo o projeto e documentá-la, porque metade dos comandos funciona e produz o comportamento errado em silêncio.",
+   "evidencia": "RPUSH fila:etl \"extrair\" \"transformar\" \"validar\" \"carregar\" \"notificar\"\nRPOP fila:etl  -> \"job:notificar\"     (saiu o ultimo, nao o primeiro)\nRPOP fila:etl  -> \"job:carregar\""
+  },
+  {
+   "titulo": "MULTI/EXEC não faz rollback, e a transação vive na conexão",
+   "sistema": "Redis",
+   "sintoma": "Um comando falha no meio de uma transação e os demais são aplicados assim mesmo, deixando estado parcial. Em outro cenário, a transação simplesmente não existe e o `EXEC` responde `ERR EXEC without MULTI`.",
+   "causa_raiz": "Duas propriedades distintas do modelo. Primeira: o `EXEC` executa a fila inteira e devolve um array em que cada posição pode ser resultado ou erro — não há desfazimento. Segunda: o `MULTI` abre um contexto **naquela conexão**; com um pool que entrega conexões diferentes a cada chamada, os comandos se espalham e a transação se desfaz.",
+   "diagnostico": "Inspecionar o array devolvido pelo `EXEC` posição a posição, em vez de tratar a resposta como sucesso único. Para o problema de conexão, verificar se a biblioteca cliente expõe transação ou conexão reservada.",
+   "correcao": "Quando a operação exige ler um valor e decidir o que escrever, usar script Lua em vez de MULTI/EXEC — o script roda no servidor como unidade indivisível e pode ramificar.",
+   "licao": "MULTI/EXEC garante isolamento e atomicidade de execução, não atomicidade de efeito. Tratá-lo como o BEGIN/COMMIT de um banco relacional leva a supor uma garantia que não existe.",
+   "evidencia": "MULTI / INCR nao:e:numero / SET marcador:pos:erro \"fui gravado\" / EXEC\n  -> 1) ERR value is not an integer or out of range\n     2) OK\nGET marcador:pos:erro -> \"fui gravado\"   (aplicado apesar do erro anterior)"
+  },
+  {
+   "titulo": "CONFIG SET aplica agora e evapora no reinício",
+   "sistema": "Redis",
+   "sintoma": "Um ajuste de `maxmemory` feito durante um incidente resolve o problema — e o mesmo incidente reaparece no próximo reinício, possivelmente meses depois.",
+   "causa_raiz": "O `CONFIG SET` altera apenas a configuração do processo em execução. Ele não escreve no arquivo de configuração.",
+   "diagnostico": "Reiniciar e comparar. No laboratório, `maxmemory` fora posto em 512 MB e a política em `allkeys-lru`; depois do `docker restart` voltaram a 0 e `noeviction`.",
+   "correcao": "Declarar a configuração onde ela persiste: `redis.conf`, argumentos do contêiner ou o compose — que foi onde este laboratório colocou o `--appendonly yes`. `CONFIG REWRITE` grava a configuração corrente no arquivo, quando existe um.",
+   "licao": "O mesmo reinício mostrou os dois lados: o dado sobreviveu porque o AOF estava declarado nos argumentos, e a configuração se perdeu porque fora ajustada em tempo de execução. O que está declarado sobrevive; o que foi ajustado a quente, não.",
+   "evidencia": "antes:  CONFIG SET maxmemory 512mb / maxmemory-policy allkeys-lru\ndepois: GET persist:test           -> \"ok\"\n        CONFIG GET maxmemory       -> 0\n        CONFIG GET maxmemory-policy-> noeviction"
+  },
+  {
+   "titulo": "A imagem oficial do Redis não persiste por padrão",
+   "sistema": "Redis",
+   "sintoma": "A Seção 19.1 do roteiro manda verificar o AOF, e a resposta é `no`. O teste de persistência que vem depois não demonstra o que pretende.",
+   "causa_raiz": "A imagem `redis` do Docker Hub sobe com `appendonly no`. A durabilidade fica por conta apenas dos snapshots RDB, que gravam em intervalos e podem perder tudo desde o último.",
+   "diagnostico": "`CONFIG GET appendonly` antes de confiar em qualquer teste de persistência.",
+   "correcao": "Ligar o AOF na subida do contêiner: `command: [\"redis-server\", \"--appendonly\", \"yes\"]`. Foi o que este laboratório fez — sem isso a Seção 19 não teria o que mostrar.",
+   "licao": "Imagens oficiais trazem padrões voltados a conveniência e desempenho, não a durabilidade. Antes de usar qualquer uma em algo que importe, vale ler o que ela liga e o que deixa desligado.",
+   "evidencia": "CONFIG GET appendonly   -> yes   (por causa do --appendonly yes no compose)\nCONFIG GET appendfsync  -> everysec\nCONFIG GET save         -> 3600 1 300 100 60 10000   (RDB segue ativo em paralelo)"
+  },
+  {
+   "titulo": "Limpar por lista fixa não escala",
+   "sistema": "Redis",
+   "sintoma": "Depois de executar toda a lista de `DEL` da Seção 23, o banco ainda tem 14 chaves.",
+   "causa_raiz": "A lista foi escrita à mão e não acompanhou as chaves criadas em outras seções. Nove das sobreviventes vêm de seções do próprio roteiro: `user:2001` a `user:2003` (5.2), `equipe:sorteio` (6.5), `pedido:1` e `pedidos:contador` (17.1), `user:1001`, `acessos:user:1001` e `fila:cadastros` (Seção 20).",
+   "diagnostico": "`DBSIZE` e `KEYS *` depois da limpeza. Cada `DEL` também informa quantas chaves realmente removeu — os zeros denunciam entradas obsoletas na lista.",
+   "correcao": "Apagar por prefixo com iteração incremental: `redis-cli --scan --pattern `cache:*` | xargs -r redis-cli DEL`. Melhor ainda, dar TTL a tudo que é descartável e não precisar limpar.",
+   "licao": "Qualquer inventário mantido à mão desatualiza silenciosamente. Em produção isso vira vazamento de memória: chaves órfãs que ninguém sabe de onde vieram e ninguém ousa apagar.",
+   "evidencia": "Após toda a lista de DEL da Seção 23:\nDBSIZE -> 14\nKEYS * -> ranking:torneio, equipe:sorteio, visitas:pagina:/produtos, acessos:user:1001,\n          pedido:1, user:1001, session:user:2002, fila:cadastros, user:2001,\n          pedidos:contador, user:2003, user:2002, ..."
   }
  ],
  "exercicios": [
@@ -822,6 +1182,54 @@
    "solucao_codigo": "// float32: 4 bytes por dimensao\n5.000.000 x 768 x 4 bytes  = 15.360.000.000 bytes  ~= 14,3 GiB\n\n// int8 (padrao do ES 8.x): 1 byte por dimensao\n5.000.000 x 768 x 1 byte   =  3.840.000.000 bytes  ~=  3,6 GiB\n\n// e ainda ha o grafo HNSW, proporcional a m (default 16)\n\n// conferir o que o mapping realmente aplicou:\nGET meu_indice/_mapping\n// \"index_options\": { \"type\": \"int8_hnsw\", \"m\": 16, \"ef_construction\": 100 }",
    "solucao_comentario": "Quatro vezes menos memória é a diferença entre caber e não caber no heap de um nó — e o HNSW só é rápido quando o grafo está em memória. O custo é um erro de precisão que aparece na terceira ou quarta casa decimal do score, como se mediu no laboratório: o knn ficou levemente abaixo do valor teórico de (1+cos)/2, justamente por causa da quantização. Em recuperação para RAG isso é irrelevante, porque o que importa é o conjunto dos k vizinhos, não o valor exato do score. Seria relevante se o score fosse usado como limiar absoluto de decisão. Vale notar que reduzir dimensões do modelo, quando ele suporta, costuma economizar mais que quantizar.",
    "criterio_correcao": "O cálculo precisa estar correto e a discussão precisa reconhecer que a perda de precisão é aceitável para ranking e problemática para limiar absoluto. Lembrar do grafo HNSW além dos vetores é diferencial."
+  },
+  {
+   "numero": 11,
+   "titulo": "Escolher a estrutura a partir da operação",
+   "sistema": "redis",
+   "dificuldade": "basico",
+   "tempo_min": 15,
+   "enunciado": "Para cada requisito abaixo, escolha a estrutura do Redis e escreva os comandos: (a) saber se um CPF já se cadastrou na promoção, sem permitir duplicata; (b) guardar o perfil de um usuário permitindo atualizar só o telefone; (c) manter os 10 produtos mais vendidos da semana; (d) guardar o resultado de um relatório caro por 15 minutos.",
+   "esperado": "A estrutura escolhida para cada caso, os comandos, e a justificativa da escolha pela operação que ela torna barata.",
+   "solucao_codigo": "# (a) SET — unicidade, e o retorno ja responde se era duplicata\nSADD promo:cpfs \"11122233344\"      # 1 = entrou agora; 0 = ja existia\nSCARD promo:cpfs\n\n# (b) HASH — atualizacao parcial sem reler o documento\nHSET user:500 nome \"Ana\" telefone \"61999990000\" email \"ana@ex.com\"\nHSET user:500 telefone \"61988887777\"\n\n# (c) SORTED SET — ordenacao mantida a cada venda\nZINCRBY vendas:semana 1 \"produto:42\"\nZREVRANGE vendas:semana 0 9 WITHSCORES\n\n# (d) STRING com TTL — o prazo substitui a rotina de limpeza\nSETEX relatorio:vendas:2026-09 900 \"{...json...}\"",
+   "solucao_comentario": "O critério não é \"que estrutura parece certa\", é \"que operação precisa ser barata\". Em (a) a operação é testar e inserir ao mesmo tempo, e o retorno do `SADD` responde sem uma segunda consulta. Em (b) é atualizar um campo sem tocar nos outros — com JSON em string seria ler, alterar e regravar, com corrida entre a leitura e a escrita. Em (c) é manter a ordem a cada incremento, e o `ZINCRBY` reordena sozinho. Em (d) é esquecer sozinho.",
+   "criterio_correcao": "Cada escolha precisa vir com a operação que a justifica. Responder apenas o nome da estrutura não atende. Em (a), usar o retorno do `SADD` como resposta à pergunta é o ponto de maior valor."
+  },
+  {
+   "numero": 12,
+   "titulo": "Consertar um rate limit que bloqueia para sempre",
+   "sistema": "redis",
+   "dificuldade": "desafio",
+   "tempo_min": 20,
+   "enunciado": "Um rate limit implementado com `INCR` seguido de `EXPIRE` funciona há meses. Hoje alguns usuários relatam bloqueio permanente: por mais que esperem, continuam barrados. Explique a causa, mostre como diagnosticar e implemente a correção.",
+   "esperado": "O diagnóstico da janela entre os dois comandos, o comando que confirma a suspeita e uma implementação atômica.",
+   "solucao_codigo": "# DIAGNOSTICO: a chave do usuario ficou sem TTL\nTTL rl:user:42        # -1 = existe e nunca expira  <-- a causa\n                      # -2 seria \"nao existe\"; qualquer positivo seria normal\n\n# CAUSA: entre estes dois comandos ha uma janela\nINCR rl:user:42       # se o processo morrer aqui...\nEXPIRE rl:user:42 60  # ...isto nunca roda, e a chave fica eterna\n\n# CORRECAO: um unico script, atomico e com ramificacao\nEVAL \"local v = redis.call('INCR', KEYS[1])\n      if v == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end\n      return v\" 1 rl:user:42 60\n\n# REMEDIACAO das chaves ja quebradas:\nredis-cli --scan --pattern \"rl:*\" | xargs -r redis-cli DEL",
+   "solucao_comentario": "O `TTL` devolvendo -1 é a assinatura do problema: a chave existe e nunca vai expirar, então o contador jamais volta a zero. A causa é que `INCR` e `EXPIRE` são duas viagens ao servidor, e nada garante que a segunda aconteça — basta o processo da aplicação morrer, ou a conexão cair, entre uma e outra. O script Lua elimina a janela porque roda inteiro dentro do servidor, e precisa ser Lua e não MULTI/EXEC porque há uma decisão no meio: só define o prazo se for a primeira requisição da janela, e MULTI/EXEC enfileira sem ver resultados intermediários. Repare que o problema é raro por requisição e inevitável em escala.",
+   "criterio_correcao": "Identificar o `TTL -1` como diagnóstico, explicar a janela entre os dois comandos e justificar por que Lua e não MULTI/EXEC. Propor apenas \"juntar os comandos numa transação\" não atende, porque MULTI/EXEC não permite a ramificação."
+  },
+  {
+   "numero": 13,
+   "titulo": "Contar únicos com orçamento de memória",
+   "sistema": "redis",
+   "dificuldade": "intermediario",
+   "tempo_min": 20,
+   "enunciado": "Você precisa reportar visitantes únicos por dia e também por mês, num site com 5 milhões de visitantes distintos mensais. Compare guardar os IDs em `SET` com usar `HyperLogLog`: estime a memória de cada opção, diga o que se perde e escolha. Depois responda: e se o time de marketing pedir a lista dos visitantes de uma campanha?",
+   "esperado": "A estimativa numérica, os comandos das duas opções e uma decisão justificada.",
+   "solucao_codigo": "# OPCAO A — SET: guarda os elementos\nSADD visitantes:2026-09-27 \"u:8412355\"\nSCARD visitantes:2026-09-27\nSUNIONSTORE visitantes:2026-09 visitantes:2026-09-01 ... visitantes:2026-09-30\n#   ~16 bytes por ID + overhead  ->  5.000.000 x ~50 B  ~=  250 MB por mes\n\n# OPCAO B — HYPERLOGLOG: guarda um resumo estatistico\nPFADD hll:visitantes:2026-09-27 \"u:8412355\"\nPFCOUNT hll:visitantes:2026-09-27\nPFMERGE hll:visitantes:2026-09 hll:visitantes:2026-09-01 ... hll:visitantes:2026-09-30\nPFCOUNT hll:visitantes:2026-09\n#   ~12 KB por chave, independentemente do volume\n#   30 dias + 1 mensal  ->  ~372 KB",
+   "solucao_comentario": "A diferença é de cerca de três ordens de grandeza: centenas de megabytes contra centenas de kilobytes. O HyperLogLog paga isso com um erro de ~0,81% e com a perda de duas capacidades: não dá para perguntar se um usuário específico está lá, nem fazer interseção entre dois contadores. Para um número de relatório, 0,81% é ruído irrelevante — ninguém toma decisão diferente entre 4.960.000 e 5.000.000 de visitantes. O `PFMERGE` resolve o mensal corretamente, enquanto somar as contagens diárias contaria repetido quem voltou em dias diferentes. Quanto à pergunta final: se for preciso a lista de quem visitou, o HyperLogLog não serve de jeito nenhum e a resposta muda — nesse caso usa-se `SET` para a campanha específica, que é um recorte menor, e mantém-se o HLL para o número agregado.",
+   "criterio_correcao": "A estimativa precisa mostrar a ordem de grandeza e a resposta precisa nomear o que o HLL não faz. Reconhecer que a pergunta final **muda a escolha** é o ponto central: a estrutura é escolhida pela pergunta, e uma pergunta nova pode invalidá-la."
+  },
+  {
+   "numero": 14,
+   "titulo": "Pub/Sub ou Stream: e-mails que somem",
+   "sistema": "integrador",
+   "dificuldade": "desafio",
+   "tempo_min": 20,
+   "enunciado": "Um serviço publica em `canal:emails` e um worker inscrito envia os e-mails. Em produção, alguns e-mails nunca chegam — sempre em torno dos horários de deploy. Explique a causa, e reescreva a solução com a garantia necessária.",
+   "esperado": "O diagnóstico da perda durante a reinicialização do consumidor e uma implementação com Stream e consumer group.",
+   "solucao_codigo": "# CAUSA: enquanto o worker reinicia, nao ha assinante.\n#        O PUBLISH devolve 0 e a mensagem deixa de existir.\nPUBLISH canal:emails \"para=ana@ex.com\"   -> 0     # ninguem ouvindo: perdida\n\n# CORRECAO: stream com consumer group\nXADD stream:emails * para \"ana@ex.com\" assunto \"Bem-vinda\"\nXGROUP CREATE stream:emails grupo:workers 0 MKSTREAM\n\n# o worker consome apenas o que nunca foi entregue ao grupo\nXREADGROUP GROUP grupo:workers worker:1 COUNT 10 BLOCK 5000 \\\n           STREAMS stream:emails >\n\n# so confirma DEPOIS de enviar de verdade\nXACK stream:emails grupo:workers 1790540869274-0\n\n# o que ficou sem confirmacao continua visivel\nXPENDING stream:emails grupo:workers",
+   "solucao_comentario": "O Pub/Sub entrega a quem está conectado naquele instante e não guarda nada — o retorno 0 do `PUBLISH` é a prova de que a mensagem foi descartada. Durante um deploy o worker fica segundos fora do ar, e tudo publicado nesse intervalo se perde. A Stream inverte isso: o evento é gravado num log e fica disponível mesmo sem consumidor algum no momento. Com consumer group, cada mensagem entregue fica pendente até o `XACK`, então confirmar **depois** do envio real garante que um worker morto no meio do processamento não leve a mensagem junto — ela continua no `XPENDING` e outro worker pode reivindicá-la com `XCLAIM`. O mesmo raciocínio vale para o GELF sobre UDP do Lab 2: ali a perda foi aceita conscientemente porque se trata de telemetria.",
+   "criterio_correcao": "Precisa identificar que a perda ocorre quando não há assinante, e que o `PUBLISH` retornando 0 é o sinal. A solução precisa confirmar com `XACK` após o envio, não antes — confirmar antes reintroduz exatamente a perda que se queria eliminar."
   }
  ],
  "avaliacao": {
@@ -945,6 +1353,54 @@
     ],
     "correta": "C",
     "justificativa": "A validação não ocorre na criação: o setting é apenas gravado, e quem tenta resolver a política é o serviço de ILM, em segundo plano. Verificado em teste: acknowledged: true na criação e step: ERROR no _ilm/explain. As alternativas A e D descrevem o comportamento defensivo que se esperaria; B parece inofensiva, mas o índice fica marcado como managed e nunca rotaciona."
+   },
+   {
+    "numero": 11,
+    "pergunta": "Uma chave `produto:10` existe como string. O que acontece ao executar `LPUSH produto:10 \"item\"`?",
+    "alternativas": [
+     "A chave é convertida em list e o item é inserido.",
+     "O comando falha com WRONGTYPE e a chave permanece como string.",
+     "A chave é sobrescrita por uma list contendo apenas o item.",
+     "O item é anexado ao fim da string, como um APPEND."
+    ],
+    "correta": "B",
+    "justificativa": "A chave carrega um tipo e comandos de outro tipo são recusados. As alternativas A e C são tentadoras porque o `SET` realmente sobrescreve qualquer chave — mas ele é a exceção, não a regra. D confunde `LPUSH` com `APPEND`."
+   },
+   {
+    "numero": 12,
+    "pergunta": "Um `TTL minha:chave` devolve **-1**. O que isso significa?",
+    "alternativas": [
+     "A chave não existe.",
+     "A chave existe e nunca vai expirar.",
+     "A chave expirou há menos de um segundo.",
+     "Houve erro ao consultar o TTL."
+    ],
+    "correta": "B",
+    "justificativa": "-1 é \"existe, sem expiração\"; -2 é \"não existe\". A alternativa A é a confusão mais comum, e ela importa: num rate limit, -1 significa contador eterno e usuário bloqueado para sempre, enquanto -2 significa que a janela já passou e o acesso deveria ser liberado."
+   },
+   {
+    "numero": 13,
+    "pergunta": "Uma transação `MULTI ... EXEC` tem três comandos e o segundo falha em tempo de execução. O que acontece?",
+    "alternativas": [
+     "Os três comandos são desfeitos e o estado volta ao anterior.",
+     "A execução para no segundo comando e o terceiro não roda.",
+     "O primeiro e o terceiro são aplicados; o EXEC devolve o erro na posição do segundo.",
+     "O EXEC é recusado inteiro e nada é aplicado."
+    ],
+    "correta": "C",
+    "justificativa": "Não há rollback: o `EXEC` devolve um array em que cada posição é um resultado ou um erro, e os comandos que funcionaram ficam aplicados. A alternativa A descreve um banco relacional. D descreve o que ocorre com erro de **sintaxe**, detectado no enfileiramento — distinção que a questão cobra."
+   },
+   {
+    "numero": 14,
+    "pergunta": "Você publica em um canal com `PUBLISH` e o retorno é 0. O que isso indica?",
+    "alternativas": [
+     "A mensagem foi enfileirada e será entregue quando houver um assinante.",
+     "Houve erro na publicação.",
+     "Nenhum assinante estava conectado e a mensagem foi descartada.",
+     "O canal não existe e precisa ser criado antes."
+    ],
+    "correta": "C",
+    "justificativa": "O retorno é a contagem de assinantes que receberam. Zero significa que ninguém ouvia e a mensagem deixou de existir — Pub/Sub não tem fila nem buffer. A alternativa A descreve uma Stream, que é justamente a estrutura a usar quando a perda é inaceitável. D é falsa: canais não precisam ser criados."
    }
   ],
   "tabela_decisao": [
@@ -987,6 +1443,36 @@
     "requisito": "Fonte da verdade de qualquer dado de negócio",
     "sistema": "MongoDB",
     "porque": "Índice de busca é derivado e descartável por princípio. Se ele for a fonte, toda evolução de mapping vira migração de risco, sem origem para reconstruir."
+   },
+   {
+    "requisito": "Leitura de um valor conhecido em microssegundos, tolerando perdê-lo",
+    "sistema": "Redis",
+    "porque": "Dados em memória e acesso por chave. MongoDB e Elasticsearch pagam disco e planejamento de consulta."
+   },
+   {
+    "requisito": "Contador incrementado por muitos clientes ao mesmo tempo, sem perder contagem",
+    "sistema": "Redis",
+    "porque": "`INCR` é atômico no servidor. Ler-somar-gravar na aplicação perde incrementos sob concorrência."
+   },
+   {
+    "requisito": "Dado temporário que deve sumir sozinho: sessão, token, rate limit, lock",
+    "sistema": "Redis",
+    "porque": "TTL nativo por chave. Nos outros dois, expirar dado exige rotina própria ou política de ciclo de vida."
+   },
+   {
+    "requisito": "Ranking consultado tanto pelo topo quanto pela posição de um participante",
+    "sistema": "Redis",
+    "porque": "Sorted set responde `ZREVRANGE` e `ZREVRANK` sem varrer. Ordenar por agregação a cada consulta não escala."
+   },
+   {
+    "requisito": "Fila de trabalhos que não pode perder mensagem se o consumidor reiniciar",
+    "sistema": "Redis (Stream)",
+    "porque": "Consumer group mantém a mensagem pendente até o `XACK`. Pub/Sub e GELF/UDP descartam quando ninguém ouve."
+   },
+   {
+    "requisito": "Contagem de elementos únicos em volume, com memória limitada",
+    "sistema": "Redis (HyperLogLog)",
+    "porque": "~12 KB por contador com erro de ~0,81%. Um `SET` ou uma agregação `cardinality` crescem com o volume."
    }
   ],
   "glossario": [
@@ -1089,6 +1575,74 @@
    {
     "termo": "ILM",
     "definicao": "Index Lifecycle Management: automatiza rollover, migração entre camadas de armazenamento e expurgo de índices."
+   },
+   {
+    "termo": "Data structure server",
+    "definicao": "Servidor em que o valor associado à chave é uma estrutura manipulável no próprio servidor, e não um blob opaco."
+   },
+   {
+    "termo": "WRONGTYPE",
+    "definicao": "Erro devolvido quando um comando é aplicado a uma chave de tipo incompatível; o Redis não converte tipos."
+   },
+   {
+    "termo": "TTL",
+    "definicao": "Tempo restante de vida de uma chave. Devolve -1 se ela é permanente e -2 se não existe."
+   },
+   {
+    "termo": "SETEX",
+    "definicao": "Grava valor e expiração numa única operação atômica, evitando o instante sem prazo do `SET` seguido de `EXPIRE`."
+   },
+   {
+    "termo": "Sorted set",
+    "definicao": "Coleção de membros com score numérico, mantida ordenada a cada escrita; empates são desempatados pelo membro."
+   },
+   {
+    "termo": "Bitmap",
+    "definicao": "String manipulada bit a bit, usada para representar um atributo booleano de muitas entidades em espaço mínimo."
+   },
+   {
+    "termo": "HyperLogLog",
+    "definicao": "Estrutura probabilística que estima cardinalidade com ~0,81% de erro e memória limitada a cerca de 12 KB."
+   },
+   {
+    "termo": "PFMERGE",
+    "definicao": "Une HyperLogLogs, permitindo obter únicos de um período a partir dos contadores de cada dia."
+   },
+   {
+    "termo": "Stream",
+    "definicao": "Log append-only com IDs crescentes, que preserva os eventos e permite releitura — ao contrário do Pub/Sub."
+   },
+   {
+    "termo": "Consumer group",
+    "definicao": "Mecanismo que distribui mensagens de uma Stream entre consumidores e mantém cada entrega pendente até o `XACK`."
+   },
+   {
+    "termo": "XPENDING",
+    "definicao": "Lista as mensagens entregues a um consumer group e ainda não confirmadas."
+   },
+   {
+    "termo": "MULTI / EXEC",
+    "definicao": "Enfileira comandos e os executa em bloco, sem intercalação de outros clientes — mas sem rollback."
+   },
+   {
+    "termo": "EVAL",
+    "definicao": "Executa um script Lua no servidor como unidade atômica, permitindo ramificar conforme resultados intermediários."
+   },
+   {
+    "termo": "RDB",
+    "definicao": "Persistência por snapshots periódicos do dataset; compacto e de recuperação rápida, perde o que veio depois do último."
+   },
+   {
+    "termo": "AOF",
+    "definicao": "Persistência por log de comandos de escrita; maior em disco, recuperação mais lenta, perda limitada a ~1 s com `everysec`."
+   },
+   {
+    "termo": "Eviction",
+    "definicao": "Política que decide quais chaves descartar ao atingir `maxmemory`; `noeviction` recusa escritas em vez de descartar."
+   },
+   {
+    "termo": "SCAN",
+    "definicao": "Iteração incremental sobre o keyspace, com cursor, que não bloqueia o servidor como o `KEYS`."
    }
   ],
   "leituras": [
@@ -1097,7 +1651,11 @@
    "Designing Data-Intensive Applications (Martin Kleppmann), capítulos 3 e 5 — estruturas de armazenamento e replicação, com o rigor que falta na maioria dos tutoriais.",
    "Artigo original do HNSW (Malkov e Yashunin, 2016) — leitura acessível para quem quer entender por que a busca aproximada funciona.",
    "Documentação do Elasticsearch sobre Retrievers e RRF — a forma atual de fazer busca híbrida, que substitui a combinação manual por script_score usada no laboratório.",
-   "MongoDB University, curso M201 (Performance) — gratuito, e cobre explain e estratégia de índices com muito mais profundidade do que um laboratório permite."
+   "MongoDB University, curso M201 (Performance) — gratuito, e cobre explain e estratégia de índices com muito mais profundidade do que um laboratório permite.",
+   "Redis in Action (Josiah Carlson) — gratuito no site da Redis; a melhor introdução aos padrões de aplicação, com capítulos inteiros sobre filas, locks e contadores.",
+   "Documentação oficial do Redis, seção Data types — cada tipo com a complexidade de cada comando, que é o que decide se ele serve ao seu volume.",
+   "Artigo original do HyperLogLog (Flajolet et al., 2007) e o post de Salvatore Sanfilippo sobre a implementação no Redis — para entender de onde vem o erro de 0,81%.",
+   "Documentação do Redis sobre Streams e consumer groups, incluindo `XCLAIM` e `XAUTOCLAIM`, que tratam o consumidor que morre sem confirmar."
   ]
  }
 }

@@ -6,7 +6,7 @@ Todos os laboratórios foram executados no **macOS (Apple Silicon) com OrbStack*
 
 ## Aula
 
-[**AULA-NoSQL.pdf**](aula/AULA-NoSQL.pdf) — 54 páginas consolidando os dois laboratórios: 8 módulos (300 min), 8 armadilhas reais de ambiente, 10 exercícios com solução comentada, 10 questões de avaliação e glossário. Todo comando e toda saída citados foram executados nos labs ou verificados contra o cluster. Regenerável com `aula/fonte/gerar.sh`.
+[**AULA-NoSQL.pdf**](aula/AULA-NoSQL.pdf) — 80 páginas consolidando os três laboratórios: 11 módulos (430 min), 14 armadilhas reais de ambiente, 14 exercícios com solução comentada, 14 questões de avaliação, tabela de decisão e glossário de 42 termos. Todo comando e toda saída citados foram executados nos labs ou verificados contra os bancos no ar. Regenerável com `aula/fonte/gerar.sh`.
 
 ## Laboratórios
 
