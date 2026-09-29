@@ -118,7 +118,7 @@ POST _analyze
 }
 ```
 
-> Repare: vira minúsculo e a pontuação some. É por isso que `match: "joao"` acha "João" — os dois passam pelo mesmo analyzer na indexação e na busca.
+> O analyzer põe tudo em minúsculo e tira a pontuação, mas mantém o acento: o token saiu `joão` e `brasília`, não `joao` e `brasilia`. Então o roteiro erra ao dizer que isso explica por que `match "joao"` acha "João". Testei e `match "joao"` não traz nada, só `joão` e `JOÃO` trazem. Para achar sem acento precisaria de um analyzer com o filtro asciifolding.
 
 ### 12.4 – match vs term
 
@@ -680,7 +680,7 @@ GET documentos_vetoriais/_mapping
 }
 ```
 
-> **Diferença de versão importante:** o roteiro foi escrito para ES 7.x, onde `dense_vector` só aceitava `dims`. Estamos no **ES 8.15**, então o campo ganhou `index: true` e `similarity: cosine` automaticamente (veja o mapping acima) — ou seja, ele já está indexado em HNSW e aceita a query `knn` nativa, que no 7.x não existia.
+> O roteiro foi escrito para o ES 7.x, onde o `dense_vector` só aceitava `dims`. Aqui é o 8.15 e o campo já veio com `index: true` e `similarity: cosine` sozinho, como aparece no mapping acima. Na prática ele nasce indexado em HNSW e aceita a query `knn`, que não existia no 7.x.
 
 ## PARTE 14 – Mapping vetorial, ingestão e busca semântica
 

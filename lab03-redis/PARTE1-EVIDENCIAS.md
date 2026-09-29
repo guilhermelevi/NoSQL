@@ -1,12 +1,12 @@
 # Lab 3 – Redis – Parte 1 – Evidências de execução
 
-Executado em 27/09/2026 17:30 · Redis 8.2.10 · macOS/OrbStack
+Executado em 29/09/2026 14:56 · Redis 8.2.10 · macOS/OrbStack
 
-Cobre as Seções 1 a 11 e os Exercícios 1 a 8. Todo comando foi executado no container `redis`; as saídas são reais.
+Cobre as Seções 1 a 11 e os Exercícios 1 a 8. Rodei todos os comandos no container `redis` e as saídas são as que apareceram.
 
 ## SEÇÃO 1 – Preparação do ambiente
 
-No roteiro original o ambiente é copiado para a VM com `scp -P 2229` e os comandos usam `sudo`. No macOS com OrbStack nada disso é necessário: o `docker-compose.yml` fica no próprio projeto e as portas já ficam acessíveis em `localhost`.
+O roteiro copia o ambiente para a VM com scp e usa sudo nos comandos. Fiz no macOS com OrbStack, então não precisei de nada disso: o docker-compose.yml fica no próprio projeto e as portas já respondem em localhost.
 
 ### 1.2 – Subir o ambiente
 
@@ -24,7 +24,7 @@ redisinsight   running   0.0.0.0:5540->5540/tcp, [::]:5540->5540/tcp
 
 ### 1.3 e 1.4 – Acessar o redis-cli e testar a conexão
 
-O roteiro oferece duas formas: entrar no container ou instalar o `redis-tools` no host. Aqui usamos a primeira, que dispensa instalar qualquer coisa:
+O roteiro dá duas opções, entrar no container ou instalar o redis-tools no host. Usei a primeira para não instalar nada:
 
 ```
 PING
@@ -42,7 +42,7 @@ PONG
 INFO server
 ```
 
-**Saída (campos relevantes — o INFO completo traz dezenas de linhas):**
+**Saída (só os campos que interessam, o INFO completo traz dezenas de linhas):**
 
 ```
 redis_version:8.2.10
@@ -51,19 +51,19 @@ os:Linux 7.0.14-orbstack-00380-ga7e0a2dc9535 aarch64
 arch_bits:64
 process_id:1
 tcp_port:6379
-uptime_in_seconds:55
+uptime_in_seconds:101
 ```
 
 ```
 INFO memory
 ```
 
-**Saída (campos relevantes — o INFO completo traz dezenas de linhas):**
+**Saída (só os campos que interessam, o INFO completo traz dezenas de linhas):**
 
 ```
-used_memory:1595944
-used_memory_human:1.52M
-used_memory_peak_human:1.52M
+used_memory:1645320
+used_memory_human:1.57M
+used_memory_peak_human:1.57M
 maxmemory:0
 maxmemory_human:0B
 maxmemory_policy:noeviction
@@ -73,13 +73,11 @@ maxmemory_policy:noeviction
 INFO keyspace
 ```
 
-**Saída (campos relevantes — o INFO completo traz dezenas de linhas):**
+**Saída (só os campos que interessam, o INFO completo traz dezenas de linhas):**
 
 ```
 # Keyspace
 ```
-
-> O `INFO keyspace` não lista nenhum banco quando não há chaves — bancos vazios simplesmente não aparecem.
 
 ```
 DBSIZE
@@ -93,7 +91,7 @@ DBSIZE
 
 ## SEÇÃO 2 – Acesso ao RedisInsight
 
-O roteiro pede para liberar a porta 5540 no VirtualBox. Com OrbStack a porta já está publicada — basta abrir <http://localhost:5540>.
+O roteiro manda liberar a porta 5540 no VirtualBox. Com OrbStack ela já está publicada, é só abrir <http://localhost:5540>.
 
 ```bash
 $ curl -s -o /dev/null -w 'RedisInsight responde: HTTP %{http_code}\n' http://localhost:5540
@@ -105,9 +103,9 @@ $ curl -s -o /dev/null -w 'RedisInsight responde: HTTP %{http_code}\n' http://lo
 RedisInsight responde: HTTP 200
 ```
 
-> Na tela **Connect existing database**, a URL de conexão é `redis://redis:6379` — `redis` é o nome do serviço na rede do Compose, que o RedisInsight resolve por DNS interno. De dentro do RedisInsight, `localhost` apontaria para o próprio contêiner dele, não para o Redis.
+> A URL é `redis://redis:6379` e não localhost. De dentro do contêiner do RedisInsight, localhost seria ele mesmo. O nome `redis` é o do serviço no compose.
 
-Sugestão didática do roteiro: navegar pela árvore de chaves e observar como prefixos com `:` viram grupos lógicos. Isso fica visível depois da Seção 5, quando existirem chaves como `user:1001` e `cache:pagina:/home`.
+O roteiro sugere navegar pela árvore de chaves e ver como os prefixos com : viram grupos. Dá para conferir isso a partir da Seção 5, quando já existem chaves como user:1001 e cache:pagina:/home.
 
 ## SEÇÃO 3 – Operações básicas com chaves
 
@@ -143,8 +141,6 @@ OK
 NoSQL - Redis Avançado
 ```
 
-> O `SET` sobrescreve sem avisar e sem erro, independentemente do tipo anterior da chave.
-
 ### 3.3 – Apagando chave
 
 ```
@@ -159,11 +155,9 @@ EXISTS curso
 0
 ```
 
-> `DEL` devolve quantas chaves foram removidas; `EXISTS` devolve 0 quando a chave não existe mais.
-
 ### 3.4 – Inspeção de chaves
 
-Preparando algumas chaves para a demonstração:
+Criei algumas chaves antes:
 
 ```
 MSET user:1 "a" user:2 "b" user:3 "c" outro:1 "x"
@@ -175,7 +169,7 @@ MSET user:1 "a" user:2 "b" user:3 "c" outro:1 "x"
 OK
 ```
 
-**Evitar em produção** — `KEYS` percorre todo o keyspace e bloqueia o servidor durante a varredura:
+O roteiro diz para evitar em produção, porque o KEYS percorre o keyspace inteiro e bloqueia o servidor:
 
 ```
 KEYS *
@@ -184,13 +178,13 @@ KEYS *
 **Saída:**
 
 ```
-outro:1
-user:3
 user:2
 user:1
+outro:1
+user:3
 ```
 
-**Preferir** — `SCAN` é incremental e devolve um cursor:
+A alternativa é o SCAN, que é incremental e devolve um cursor:
 
 ```
 SCAN 0 MATCH * COUNT 100
@@ -200,9 +194,9 @@ SCAN 0 MATCH * COUNT 100
 
 ```
 0
+user:2
 outro:1
 user:3
-user:2
 user:1
 ```
 
@@ -214,12 +208,12 @@ SCAN 0 MATCH user:* COUNT 100
 
 ```
 0
-user:3
 user:2
+user:3
 user:1
 ```
 
-> O primeiro valor da resposta é o cursor. Quando volta `0`, a varredura terminou. Com muitas chaves o cursor vem diferente de zero e é preciso chamar o `SCAN` de novo passando esse valor — é justamente isso que torna o comando incremental e não bloqueante.
+> O primeiro valor da resposta é o cursor. Voltou 0, então a varredura acabou numa passada só. Com muitas chaves ele viria diferente de zero e eu teria que chamar o SCAN de novo passando esse valor.
 
 ```
 DEL user:1 user:2 user:3 outro:1
@@ -263,7 +257,7 @@ OK
 valor
 ```
 
-O roteiro observa que o `RENAME` falha se a chave original não existir. Confirmando:
+O roteiro avisa que o RENAME falha se a chave original não existir. Conferindo:
 
 ```
 RENAME chave:inexistente chave:qualquer
@@ -288,7 +282,7 @@ DEL chave:nova
 
 ### 3.7 – Limpando o banco
 
-Criando chaves para comprovar o efeito:
+Criei chaves para ver o efeito:
 
 ```
 MSET a 1 b 2 c 3
@@ -314,7 +308,7 @@ OK
 0
 ```
 
-> `FLUSHDB` apaga apenas o banco atual. `FLUSHALL` apaga todos os 16 bancos — é destrutivo e o roteiro corretamente o deixa comentado.
+> O FLUSHDB limpa só o banco atual. O FLUSHALL limpa os 16, por isso deixei comentado.
 
 ### 3.8 – Variantes de limpeza e seleção de banco
 
@@ -328,9 +322,9 @@ FLUSHDB ASYNC
 OK
 ```
 
-> `ASYNC` libera a memória numa thread em segundo plano, sem bloquear o servidor. Em bancos com milhões de chaves a diferença entre bloquear e não bloquear é o que decide se a aplicação sofre timeout durante a limpeza.
+> O ASYNC libera a memória em segundo plano, sem travar o servidor durante a limpeza.
 
-O `SELECT` vale **por conexão**, então os comandos abaixo precisam rodar na mesma sessão:
+O SELECT vale por conexão, então rodei os comandos abaixo na mesma sessão:
 
 ```
 SELECT 1
@@ -352,7 +346,7 @@ OK
 
 ```
 
-> No banco 1 o `DBSIZE` é 1; de volta ao banco 0 é 0, e a chave criada no banco 1 não é visível — `GET` devolve vazio. Os bancos são espaços de nomes isolados dentro da mesma instância. O roteiro alerta: em produção prefira instâncias separadas, porque os bancos numerados compartilham CPU, memória e o mesmo processo de persistência.
+> A chave criada no banco 1 não aparece no banco 0. Os bancos são isolados, mas dividem o mesmo processo e a mesma memória, então o roteiro tem razão em dizer que em produção é melhor usar instâncias separadas.
 
 ```
 SELECT 1
@@ -384,7 +378,7 @@ OK
 -1
 ```
 
-> `TTL` devolve **-1** quando a chave existe mas não tem expiração, e **-2** quando a chave não existe. São respostas diferentes para situações diferentes — confundi-las é fonte comum de bug em camada de cache.
+> O TTL tem três respostas: os segundos que faltam, -1 se a chave existe e não expira, e -2 se ela não existe. Confundir -1 com -2 dá problema em cache, porque uma coisa é estar guardado para sempre e outra é não estar guardado.
 
 ```
 EXPIRE cache:home 30
@@ -409,8 +403,6 @@ TTL cache:home
 1
 -1
 ```
-
-> O `PERSIST` removeu a expiração e o TTL voltou a -1: a chave virou permanente.
 
 ### 4.2 – Criando já com expiração
 
@@ -444,7 +436,7 @@ OK
 20
 ```
 
-> `SETEX` é equivalente a `SET ... EX`. A vantagem de qualquer um dos dois sobre `SET` seguido de `EXPIRE` é a atomicidade: não existe instante em que a chave esteja gravada sem prazo de validade.
+> O SETEX faz o mesmo que SET com EX. Os dois são melhores que SET seguido de EXPIRE porque gravam o valor e o prazo juntos, sem deixar a chave um instante sem validade.
 
 ### 4.4 – Expirando em milissegundos
 
@@ -458,11 +450,9 @@ TTL cache:api:1
 
 ```
 OK
-4969
+4966
 5
 ```
-
-> `PTTL` responde em milissegundos e `TTL` em segundos (arredondado para cima).
 
 ### 4.5 – Invalidando cache manualmente
 
@@ -502,8 +492,6 @@ OK
 -2
 ```
 
-> Depois do `DEL`, o `TTL` passa a devolver -2 (chave inexistente), e não -1.
-
 ## SEÇÃO 5 – Strings
 
 ### 5.1 – Operações básicas
@@ -526,7 +514,7 @@ João Silva
 11
 ```
 
-> Atenção ao `STRLEN`: ele conta **bytes**, não caracteres. "João Silva" tem 10 caracteres, mas o `ã` ocupa 2 bytes em UTF-8, então o resultado é 11. O `APPEND` devolve o novo comprimento, também em bytes.
+> O STRLEN deu 11 e não 10 porque ele conta bytes, não caracteres. O ã ocupa 2 bytes em UTF-8. O APPEND devolve o mesmo número.
 
 ### 5.2 – Múltiplas chaves
 
@@ -544,7 +532,7 @@ Bruno
 Carlos
 ```
 
-> `MSET`/`MGET` resolvem várias chaves numa única ida ao servidor. O ganho não está no Redis processar mais rápido, está em eliminar o custo de rede por chave — o mesmo raciocínio do `_bulk` do Elasticsearch e do `insertMany` do MongoDB.
+> MSET e MGET resolvem tudo numa ida só ao servidor. O ganho é o mesmo do insertMany do MongoDB: economizar viagem de rede.
 
 ### 5.3 – Contadores
 
@@ -568,7 +556,7 @@ OK
 8
 ```
 
-> Cada operação é atômica: mil clientes incrementando ao mesmo tempo não perdem contagem. É a razão de existir o `INCR` em vez de `GET`, somar na aplicação e `SET` — esse trio produz condição de corrida.
+> O INCR é atômico. Se eu fizesse GET, somasse na aplicação e desse SET, dois clientes simultâneos poderiam ler o mesmo valor e um sobrescreveria a contagem do outro.
 
 ### 5.4 – Incremento em valor monetário ou decimal
 
@@ -586,7 +574,7 @@ OK
 13.25
 ```
 
-> `INCRBYFLOAT` usa ponto flutuante. Para dinheiro, a prática segura é guardar centavos como inteiro e usar `INCRBY`, evitando erro de arredondamento binário.
+> O INCRBYFLOAT usa ponto flutuante. Para dinheiro prefiro guardar centavos em inteiro e usar INCRBY, para não pegar erro de arredondamento.
 
 ### 5.5 – Recuperação parcial de string
 
@@ -605,8 +593,6 @@ ABCD
 EFGH
 123456
 ```
-
-> Os índices são inclusivos nas duas pontas e aceitam valores negativos contando do fim.
 
 ### Exercício 2
 
@@ -640,7 +626,7 @@ OK
 60
 ```
 
-> Valor final 15 — cinco `INCR` mais um `INCRBY 10`. Detalhe importante: o `INCR` **não** renova o TTL. Uma chave de contador com expiração continua expirando no prazo original por mais que seja incrementada, e é exatamente disso que depende o rate limit da Seção 10.3.
+> Deu 15, que são os cinco INCR mais o INCRBY 10, e o TTL ficou em 60. Testando aqui, o INCR não renova o TTL: a chave continua expirando no prazo que foi definido, por mais que eu incremente.
 
 ## SEÇÃO 6 – Sets
 
@@ -666,7 +652,7 @@ Carlos
 0
 ```
 
-Tentando inserir um membro que já existe:
+Inserindo um membro que já está no conjunto:
 
 ```
 SADD curso:BI "Ana"
@@ -678,7 +664,7 @@ SADD curso:BI "Ana"
 0
 ```
 
-> Devolve 0: nenhum elemento novo foi adicionado. O `SADD` informa quantos membros realmente entraram, o que permite usar o set como teste de unicidade — por exemplo, para saber se um voto ou um clique já foi computado.
+> Devolveu 0 porque a Ana já estava no conjunto. O SADD informa quantos entraram de fato, então dá para usar o retorno para saber se um valor é repetido.
 
 ### 6.2 – Remoção
 
@@ -724,16 +710,16 @@ SDIFF curso:BI curso:DS
 
 ```
 Ana
-Ana
 Fernanda
 Carlos
+Ana
 Marcos
 Fernanda
 Marcos
 Carlos
 ```
 
-> `SDIFF` não é comutativo: `SDIFF A B` devolve o que está em A e não em B. Trocar a ordem dos argumentos muda o resultado, como as duas últimas saídas mostram.
+> O SDIFF não é comutativo. SDIFF A B traz o que está em A e não está em B, e invertendo a ordem o resultado muda, como aparece nas duas últimas saídas.
 
 ### 6.5 – Sorteio/remoção aleatória
 
@@ -748,14 +734,14 @@ SMEMBERS equipe:sorteio
 
 ```
 4
-C
+D
 D
 A
 B
 C
 ```
 
-> `SRANDMEMBER` apenas lê; `SPOP` lê **e remove**. Para um sorteio sem repetição, `SPOP` é o comando correto — é a diferença entre espiar uma carta e tirá-la do baralho.
+> O SRANDMEMBER só lê, o SPOP lê e remove. Para sorteio sem repetir, é o SPOP.
 
 ### Exercício 3
 
@@ -778,18 +764,18 @@ SCARD interesses:redis
 3
 Bruno
 Carlos
-Ana
 Diana
 Eduardo
+Ana
 Bruno
 Carlos
-Ana
 Diana
+Ana
 4
 3
 ```
 
-> Interseção = quem tem os dois interesses (Bruno e Carlos). União = 5 pessoas distintas, apesar de 7 inserções — a unicidade do set eliminou as duplicatas. Diferença = só Python.
+> Interseção: Bruno e Carlos, que estão nos dois conjuntos. União: 5 nomes, mesmo eu tendo inserido 7 vezes, porque o set não repete. Diferença de python para redis: Ana e Diana.
 
 ## SEÇÃO 7 – Sorted Sets (ranking)
 
@@ -819,7 +805,7 @@ carlos
 90
 ```
 
-> `ZRANGE` ordena do menor para o maior score; `ZREVRANGE` inverte. Para ranking o natural é o `ZREVRANGE`, porque quem tem mais pontos deve aparecer primeiro.
+> O ZRANGE vai do menor score para o maior e o ZREVRANGE inverte. Para ranking uso o ZREVRANGE, porque quem tem mais ponto tem que vir primeiro.
 
 ### 7.2 – Incrementando pontuação
 
@@ -840,8 +826,6 @@ joao
 100
 ```
 
-> Carlos saiu de 90 para 115 e ultrapassou João (100) — a reordenação é automática. O sorted set mantém a ordem a cada escrita, sem que ninguém precise reordenar nada.
-
 ### 7.3 – Descobrindo posição
 
 ```
@@ -856,7 +840,7 @@ ZREVRANK ranking:pontos "carlos"
 1
 ```
 
-> As posições são baseadas em zero. `ZRANK` conta do menor score; `ZREVRANK` do maior — este é o que corresponde à colocação no ranking.
+> As posições começam em zero. O ZRANK conta a partir do menor score e o ZREVRANK a partir do maior, que é o que corresponde à colocação.
 
 ### 7.4 – Consultando score
 
@@ -886,8 +870,6 @@ maria
 carlos
 115
 ```
-
-> Top 2. O intervalo `0 1` é inclusivo nas duas pontas, então devolve dois elementos, não um.
 
 ### 7.6 – Removendo participante
 
@@ -946,7 +928,7 @@ Bruno
 8
 ```
 
-> Carlos subiu de 6,5 para 8,0 e empatou com Bruno. Em caso de empate o Redis ordena pelo **membro**, em ordem lexicográfica — mas como o `ZREVRANGE` percorre a estrutura ao contrário, o empate também sai invertido e "Carlos" aparece antes de "Bruno". Verificado à parte: com Ana, Bruno e Carlos todos com score 8, `ZRANGE` devolve Ana → Bruno → Carlos e `ZREVRANGE` devolve Carlos → Bruno → Ana. O `ZREVRANK` devolve a colocação começando em zero, então o 1 aqui significa **segundo lugar**.
+> Carlos foi para 8,0 e empatou com Bruno. No empate o Redis ordena pelo nome do membro, mas como o ZREVRANGE percorre ao contrário o empate também sai invertido, e o Carlos aparece antes do Bruno. Testei separado com Ana, Bruno e Carlos todos com 8: no ZRANGE saiu Ana, Bruno, Carlos e no ZREVRANGE saiu Carlos, Bruno, Ana. O ZREVRANK devolveu 1, que é segundo lugar.
 
 ## SEÇÃO 8 – Lists
 
@@ -970,7 +952,7 @@ job1
 job3
 ```
 
-> `LPUSH` insere à esquerda (início) e `RPUSH` à direita (fim). Como job1 entrou primeiro pela esquerda e job2 depois, a ordem final é job2, job1, job3.
+> O LPUSH insere no início e o RPUSH no fim. O job1 entrou primeiro pela esquerda e o job2 depois, por isso a ordem ficou job2, job1, job3.
 
 ### 8.2 – Consumo FIFO
 
@@ -987,7 +969,7 @@ job2
 job1
 ```
 
-> `LPUSH` + `RPOP` = FIFO: entra pela esquerda, sai pela direita, e quem chegou primeiro sai primeiro.
+> LPUSH com RPOP é FIFO: entra de um lado e sai do outro, então sai primeiro quem chegou primeiro.
 
 ### 8.3 – Consumo LIFO
 
@@ -1003,7 +985,7 @@ job2
 job1
 ```
 
-> `LPUSH` + `LPOP` = LIFO (pilha): entra e sai pelo mesmo lado.
+> LPUSH com LPOP é pilha: entra e sai pelo mesmo lado.
 
 ### 8.4 – Tamanho da lista
 
@@ -1040,8 +1022,6 @@ p3
 p4
 ```
 
-> Índices negativos contam do fim: `-1` é o último elemento e `-2 -1` devolve os dois últimos. `LRANGE` apenas lê, não remove.
-
 ### Exercício 5
 
 1) Criar 5 jobs em `fila:etl` · 2) listar · 3) consumir dois com `RPOP`.
@@ -1074,7 +1054,7 @@ job:validar
 3
 ```
 
-> Como os jobs entraram com `RPUSH` (pela direita) e saem com `RPOP` (também pela direita), o consumo é LIFO: saíram os dois **últimos** da fila. Para FIFO com `RPUSH`, o consumo correto é `LPOP`. Essa inversão é o erro mais comum com listas no Redis.
+> Saíram o job:notificar e o job:carregar, que eram os dois últimos. Entrei com RPUSH e consumi com RPOP, as duas pontas iguais, então virou pilha e não fila. Para ficar FIFO com RPUSH eu teria que consumir com LPOP.
 
 ## SEÇÃO 9 – Hashes
 
@@ -1109,7 +1089,7 @@ Engenharia de Dados
 3
 ```
 
-> O hash representa uma entidade sem precisar serializar JSON: cada campo é lido e escrito isoladamente. Com uma string JSON, atualizar a idade exigiria ler o documento inteiro, alterar na aplicação e regravar — três operações e uma janela de condição de corrida.
+> O hash guarda a entidade sem precisar serializar JSON, e dá para ler e escrever um campo de cada vez. Com JSON numa string eu teria que ler tudo, alterar na aplicação e gravar de volta.
 
 ### 9.2 – Consulta parcial de vários campos
 
@@ -1145,8 +1125,6 @@ cidade
 Brasília
 ```
 
-> O `HSET` devolve 1 quando o campo é novo e 0 quando apenas atualiza um campo existente.
-
 ### 9.4 – Incremento numérico dentro do hash
 
 ```
@@ -1161,7 +1139,7 @@ HGET aluno:1 idade
 23
 ```
 
-> Os valores de um hash são sempre strings, mas o `HINCRBY` interpreta como inteiro e incrementa atomicamente — sem ler-somar-gravar na aplicação.
+> O HINCRBY incrementa o campo direto no servidor, mesmo os valores do hash sendo strings.
 
 ### 9.5 – Verificando existência de campo
 
@@ -1196,7 +1174,7 @@ curso
 Engenharia de Dados
 ```
 
-> Removendo o último campo de um hash, a chave inteira deixa de existir — no Redis não há coleção vazia.
+> Quando apago o último campo, a chave some junto. No Redis não existe hash vazio.
 
 ### Exercício 6
 
@@ -1263,8 +1241,6 @@ OK
 300
 ```
 
-> A sessão expirar sozinha é o ponto: não existe rotina de limpeza, nem job noturno varrendo sessões mortas. O Redis remove a chave no vencimento.
-
 ### 10.3 – Rate limit simples
 
 ```
@@ -1283,7 +1259,7 @@ TTL rl:user:42
 60
 ```
 
-Simulando mais requisições do mesmo usuário dentro da janela:
+Mais requisições do mesmo usuário dentro da janela:
 
 ```
 INCR rl:user:42
@@ -1307,7 +1283,7 @@ TTL rl:user:42
 60
 ```
 
-> Regra didática do roteiro: acima de 5, bloquear. Repare que o TTL **não** foi renovado pelos `INCR` seguintes — a janela continua contando a partir do primeiro acesso, que é o comportamento desejado. Há porém uma falha de concorrência aqui: entre o `INCR` e o `EXPIRE` existe um instante em que a chave não tem prazo, e se o processo morrer nesse intervalo o contador fica eterno e bloqueia o usuário para sempre. A Seção 18 (script Lua) resolve exatamente isso.
+> A regra do roteiro é bloquear acima de 5. O TTL não foi renovado pelos INCR seguintes, então a janela conta a partir do primeiro acesso. Reparei que entre o INCR e o EXPIRE existe um instante em que a chave está sem prazo: se o processo morrer ali, o contador nunca expira e o usuário fica bloqueado para sempre.
 
 ### 10.4 – Fila simples
 
@@ -1327,8 +1303,6 @@ email2
 email1
 email1
 ```
-
-> Aqui a combinação está correta: `LPUSH` + `RPOP` é FIFO, então saiu o email1, que foi o primeiro a entrar.
 
 ### 10.5 – Ranking
 
@@ -1390,21 +1364,21 @@ carla
 980
 ```
 
-> Quatro estruturas para quatro necessidades: string com TTL para o cache, string com `INCR` para o contador, string com TTL para a sessão e sorted set para o ranking. Repare que o contador de visitas **não** tem TTL — ele precisa sobreviver à expiração do cache da página.
+> Usei string com TTL no cache e na sessão, string com INCR no contador e sorted set no ranking. Deixei o contador de visitas sem TTL de propósito, senão ele zeraria junto com o cache da página.
 
 ## SEÇÃO 11 – Pub/Sub
 
-O roteiro pede dois terminais. Aqui o assinante foi posto em segundo plano, gravando num arquivo, e a publicação feita em seguida por outra conexão.
+O roteiro pede dois terminais. Deixei o assinante rodando em segundo plano, gravando num arquivo, e publiquei em seguida por outra conexão.
 
 ### 11.1 – Publicação e inscrição
 
-**Terminal 1 — assinante:**
+**Terminal 1, assinante:**
 
 ```
 SUBSCRIBE canal:noticias
 ```
 
-**Terminal 2 — publicador:**
+**Terminal 2, publicador:**
 
 ```
 PUBLISH canal:noticias "Mensagem 1"
@@ -1427,17 +1401,17 @@ canal:noticias
 Mensagem 2
 ```
 
-> O `PUBLISH` devolve **quantos assinantes receberam** a mensagem — 1 nos dois casos. Se ninguém estivesse inscrito, devolveria 0 e a mensagem seria descartada: o Pub/Sub não guarda nada. Essa é a diferença central para as Streams da Seção 12.
+> O PUBLISH devolve quantos assinantes receberam, 1 nos dois casos. Sem ninguém inscrito ele devolveria 0 e a mensagem se perderia, porque o Pub/Sub não guarda nada.
 
 ### 11.2 – Pattern subscribe
 
-**Terminal 1 — assinante por padrão:**
+**Terminal 1, assinante por padrão:**
 
 ```
 PSUBSCRIBE canal:*
 ```
 
-**Terminal 2 — publicador:**
+**Terminal 2, publicador:**
 
 ```
 PUBLISH canal:noticias "Nova noticia"
@@ -1464,7 +1438,7 @@ canal:alertas
 Alerta importante
 ```
 
-> As duas primeiras mensagens casaram com o padrão `canal:*` e chegaram. A terceira, publicada em `outro:canal`, devolveu **0 assinantes** e não foi entregue — comprovando que o padrão filtra de verdade.
+> As duas primeiras casaram com canal:* e chegaram. A terceira foi para outro:canal, devolveu 0 assinantes e não chegou.
 
 ### Exercício 8
 
@@ -1500,7 +1474,7 @@ Alerta 3: servico reiniciado
 
 ---
 
-Fim da Parte 1. As chaves criadas aqui permanecem no banco e são usadas pela Parte 2; a limpeza está na Seção 23.
+Fim da Parte 1. As chaves continuam no banco e são usadas na Parte 2, a limpeza fica na Seção 23.
 
 ```bash
 $ docker exec redis redis-cli DBSIZE

@@ -54,7 +54,7 @@ shell() {
 info() {
   local s="$1" campos="$2"
   { echo ""; echo '```'; echo "INFO $s"; echo '```'; echo ""
-    echo "**Saída (campos relevantes — o INFO completo traz dezenas de linhas):**"; echo ""; echo '```'
+    echo "**Saída (só os campos que interessam, o INFO completo traz dezenas de linhas):**"; echo ""; echo '```'
     echo "INFO $s" | $R 2>&1 | grep -E "$campos" | tr -d '\r'
     echo '```'; } >> "$OUT"
   echo "  . INFO $s"

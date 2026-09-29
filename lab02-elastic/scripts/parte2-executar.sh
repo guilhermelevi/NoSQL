@@ -61,7 +61,7 @@ nota "Status **yellow**: com 1 nó só, as replicas ficam \`unassigned\` (não h
 
 sub "12.3 – Analyzer: tokenização e normalização"
 req POST "_analyze" '{ "analyzer": "standard", "text": "JOÃO, da Silva; em BRASÍLIA!" }' "Analyzer standard"
-nota "Repare: vira minúsculo e a pontuação some. É por isso que \`match: \"joao\"\` acha \"João\" — os dois passam pelo mesmo analyzer na indexação e na busca."
+nota "O analyzer põe tudo em minúsculo e tira a pontuação, mas mantém o acento: o token saiu \`joão\` e \`brasília\`, não \`joao\` e \`brasilia\`. Então o roteiro erra ao dizer que isso explica por que \`match \"joao\"\` acha \"João\". Testei e \`match \"joao\"\` não traz nada, só \`joão\` e \`JOÃO\` trazem. Para achar sem acento precisaria de um analyzer com o filtro asciifolding."
 
 sub "12.4 – match vs term"
 req GET "meu_indice/_search" '{ "query": { "match": { "nome": "João" } } }' "match (analisado)"
@@ -96,7 +96,7 @@ sub "13.2 – Campo dense_vector (dims 384)"
 curl -s -X DELETE "$ES/documentos_vetoriais" > /dev/null
 req PUT "documentos_vetoriais" '{ "mappings": { "properties": { "texto": { "type": "text" }, "embedding": { "type": "dense_vector", "dims": 384 } } } }' "Cria índice com dense_vector de 384 dimensões"
 req GET "documentos_vetoriais/_mapping" "" "Mapping resultante"
-nota "**Diferença de versão importante:** o roteiro foi escrito para ES 7.x, onde \`dense_vector\` só aceitava \`dims\`. Estamos no **ES 8.15**, então o campo ganhou \`index: true\` e \`similarity: cosine\` automaticamente (veja o mapping acima) — ou seja, ele já está indexado em HNSW e aceita a query \`knn\` nativa, que no 7.x não existia."
+nota "O roteiro foi escrito para o ES 7.x, onde o \`dense_vector\` só aceitava \`dims\`. Aqui é o 8.15 e o campo já veio com \`index: true\` e \`similarity: cosine\` sozinho, como aparece no mapping acima. Na prática ele nasce indexado em HNSW e aceita a query \`knn\`, que não existia no 7.x."
 
 # ---------------- PARTE 14 ----------------
 sec "PARTE 14 – Mapping vetorial, ingestão e busca semântica"
