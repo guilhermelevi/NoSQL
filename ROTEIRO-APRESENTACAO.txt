@@ -1,49 +1,74 @@
-1. cd ~/Documents/CEUB/5\ Semestre/NoSQL
+1
+cd "$HOME/Documents/CEUB/5 Semestre/NoSQL"
 
-2. cd lab02-elastic && docker compose up -d
+2
+cd lab02-elastic && docker compose up -d
 
-3. cd ../lab03-redis && docker compose up -d
+3
+cd ../lab03-redis && docker compose up -d
 
-4. cd ../lab01-mongodb && docker compose up -d
+4
+cd ../lab01-mongodb && docker compose up -d
 
-5. cd ..
+5
+cd ..
 
-6. docker ps
+6
+docker ps
 
-7. curl localhost:9200
+7
+curl localhost:9200
 
-8. curl "localhost:9200/_cluster/health?pretty"
+8
+curl "localhost:9200/_cluster/health?pretty"
 
-9. docker exec redis redis-cli PING
+9
+docker exec redis redis-cli PING
 
-10. docker exec mongodb-container mongosh --quiet -u admin -p 123456 --authenticationDatabase admin --eval 'db.adminCommand("ping")'
+10
+docker exec mongodb-container mongosh --quiet -u admin -p 123456 --authenticationDatabase admin --eval 'db.adminCommand("ping")'
 
-11. http://localhost:5601
+11
+http://localhost:5601
 
-12. http://localhost:5540
+12
+http://localhost:5540
 
-13. mongodb://admin:123456@localhost:27017/?authSource=admin
+13
+mongodb://admin:123456@localhost:27017/?authSource=admin
 
-14. cat lab02-elastic/logstash/pipeline/logstash.conf
+14
+cat lab02-elastic/logstash/pipeline/logstash.conf
 
-15. grep -A4 logging lab01-mongodb/docker-compose.yml
+15
+grep -A4 logging lab01-mongodb/docker-compose.yml
 
-16. docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin
+16
+docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin
 
-17. use demo
+17
+use demo
 
-18. db.setProfilingLevel(0, { slowms: 0 })
+18
+db.setProfilingLevel(0, { slowms: 0 })
 
-19. db.pedidos.insertOne({ cliente: "PROFESSOR-RAUL", valor: 1234.56 })
+19
+db.pedidos.insertOne({ cliente: "PROFESSOR-RAUL", valor: 1234.56 })
 
-20. exit
+20
+exit
 
-21. curl "localhost:9200/_cat/indices/mongodb-logs-*?v"
+21
+curl "localhost:9200/_cat/indices/mongodb-logs-*?v"
 
-22. curl "localhost:9200/mongodb-logs-*/_search?pretty&size=1" -H 'Content-Type: application/json' -d '{"query":{"match_phrase":{"message":"PROFESSOR-RAUL"}}}'
+22
+curl "localhost:9200/mongodb-logs-*/_search?pretty&size=1" -H 'Content-Type: application/json' -d '{"query":{"match_phrase":{"message":"PROFESSOR-RAUL"}}}'
 
-23. docker stop logstash
+23
+docker stop logstash
 
-24. docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin --eval 'db.getSiblingDB("demo").pedidos.insertOne({ cliente: "SEM-LOGSTASH" })'
+24
+docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin --eval 'db.getSiblingDB("demo").pedidos.insertOne({ cliente: "SEM-LOGSTASH" })'
 
-25. docker start logstash
+25
+docker start logstash
