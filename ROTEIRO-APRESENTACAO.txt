@@ -1,98 +1,153 @@
+=====================================================================
+CRITERIO 1 - APRESENTAR O AMBIENTE FUNCIONAL - 50%
+=====================================================================
+
 1 - entra na pasta do projeto
 cd "$HOME/Documents/CEUB/5 Semestre/NoSQL"
 
-2 - sobe Elasticsearch, Kibana e Logstash. Tem que ser o primeiro, para o Logstash ja estar escutando na 12201 quando o Mongo subir
-cd lab02-elastic && docker compose up -d
+2 - entra na pasta do Elastic
+cd lab02-elastic
 
-3 - sobe Redis e RedisInsight
-cd ../lab03-redis && docker compose up -d
+3 - sobe Elasticsearch, Kibana e Logstash. Tem que ser o primeiro, para o Logstash ja estar escutando na 12201 quando o Mongo subir
+docker compose up -d
 
-4 - sobe o MongoDB
-cd ../lab01-mongodb && docker compose up -d
+4 - entra na pasta do Redis
+cd ../lab03-redis
 
-5 - volta para a raiz do projeto
+5 - sobe Redis e RedisInsight
+docker compose up -d
+
+6 - entra na pasta do Mongo
+cd ../lab01-mongodb
+
+7 - sobe o MongoDB
+docker compose up -d
+
+8 - volta para a raiz do projeto
 cd ..
 
-6 - lista os containers rodando, devem aparecer 6
+9 - lista os containers rodando, devem aparecer 6
 docker ps
 
-7 - confirma o Elasticsearch, devolve a versao e o nome do cluster
+10 - confirma o Elasticsearch, devolve a versao e o nome do cluster
 curl localhost:9200
 
-8 - estado do cluster. Fica yellow porque com 1 no so as replicas nao tem onde ser alocadas
+11 - estado do cluster. Fica yellow porque com 1 no so as replicas nao tem onde ser alocadas
 curl "localhost:9200/_cluster/health?pretty"
 
-9 - confirma o Redis, devolve PONG
+12 - confirma o Redis, devolve PONG
 docker exec redis redis-cli PING
 
-10 - confirma o MongoDB, devolve ok 1
+13 - confirma o MongoDB, devolve ok 1
 docker exec mongodb-container mongosh --quiet -u admin -p 123456 --authenticationDatabase admin --eval 'db.adminCommand("ping")'
 
-11 - abre o Kibana
+14 - abre o Kibana
 http://localhost:5601
 
-12 - abre o RedisInsight, clicar em Redis Lab 3
+15 - abre o RedisInsight, clicar em Redis Lab 3
 http://localhost:5540
 
-13 - string de conexao do MongoDB para a extensao do VS Code
+16 - conecta o MongoDB na extensao do VS Code
 mongodb://admin:123456@localhost:27017/?authSource=admin
 
-14 - mostra o pipeline: recebe GELF na 12201 e indexa no Elasticsearch num indice por dia
+
+=====================================================================
+CRITERIO 2 - INGESTAO DE LOGS DO MONGODB NO ELASTIC - 25%
+=====================================================================
+
+17 - mostra o pipeline: recebe GELF na 12201 e indexa no Elasticsearch num indice por dia
 cat lab02-elastic/logstash/pipeline/logstash.conf
 
-15 - mostra o outro lado, o driver de log gelf no compose do MongoDB
+18 - mostra o outro lado, o driver de log gelf no compose do MongoDB
 grep -A4 logging lab01-mongodb/docker-compose.yml
 
-16 - entra no shell do MongoDB
+19 - entra no shell do MongoDB
 docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin
 
-17 - muda para o banco demo
+20 - muda para o banco demo
 use demo
 
-18 - faz o Mongo registrar toda operacao no log. Sem isso ele so registra as acima de 100ms e o insert nao gera linha nenhuma. Some a cada restart
+21 - faz o Mongo registrar toda operacao no log. Sem isso ele so registra as acima de 100ms e o insert nao gera linha nenhuma. Some a cada restart
 db.setProfilingLevel(0, { slowms: 0 })
 
-19 - insere o documento. Devolve acknowledged true e o insertedId
+22 - insere o documento. Devolve acknowledged true e o insertedId
 db.pedidos.insertOne({ cliente: "PROFESSOR-RAUL", valor: 1234.56 })
 
-20 - mostra o documento gravado no MongoDB, comprovando a insercao
+23 - mostra o documento gravado no MongoDB, comprovando a insercao
 db.pedidos.find({ cliente: "PROFESSOR-RAUL" })
 
-21 - quantos documentos existem na colecao
+24 - quantos documentos existem na colecao
 db.pedidos.countDocuments({})
 
-22 - sai do shell do MongoDB
+25 - sai do shell do MongoDB
 exit
 
-23 - lista os indices de log, um por dia
+26 - lista os indices de log, um por dia
 curl "localhost:9200/_cat/indices/mongodb-logs-*?v"
 
-24 - busca no Elasticsearch o log do insert. O campo message traz a linha do mongod crua, sem tratamento, com o documento inteiro dentro
+27 - busca no Elasticsearch o log do insert. O campo message traz a linha do mongod crua, sem tratamento, com o documento inteiro dentro
 curl "localhost:9200/mongodb-logs-*/_search?pretty&size=1" -H 'Content-Type: application/json' -d '{"query":{"match_phrase":{"message":"PROFESSOR-RAUL"}}}'
 
-25 - derruba o Logstash
+28 - derruba o Logstash
 docker stop logstash
 
-26 - insere com o Logstash fora do ar. O Mongo funciona normal e o log se perde, porque GELF e UDP e nao tem buffer
+29 - insere com o Logstash fora do ar. O Mongo funciona normal e o log se perde, porque GELF e UDP e nao tem buffer
 docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin --eval 'db.getSiblingDB("demo").pedidos.insertOne({ cliente: "SEM-LOGSTASH" })'
 
-27 - sobe o Logstash de volta
+30 - sobe o Logstash de volta
 docker start logstash
 
-28 - volta para a pasta do projeto
+
+=====================================================================
+CRITERIO 3 - EXERCICIO INDICADO PELO PROFESSOR - 25%
+=====================================================================
+
+31 - exercicio de MongoDB: playground da extensao do VS Code
+VS Code > folha verde > conexao > botao de playground
+
+32 - exercicio de Elasticsearch: console do Kibana
+http://localhost:5601 > menu > Dev Tools
+
+33 - exercicio de Redis: console do RedisInsight
+http://localhost:5540 > Workbench
+
+34 - dados disponiveis no MongoDB
+dbNoSQLBD: estudantes(10) professores(3) cursos(3) disciplinas(2) | aulaIdx: alunos(200000) | loja: produtos(12)
+
+35 - dados disponiveis no Elasticsearch
+mongodb-logs-* | meu_indice-000001(22) | transacoes-000001(22) | produtos(12) | indice_conhecimento(23)
+
+36 - dados disponiveis no Redis
+9 chaves com prefixo demo:
+
+
+=====================================================================
+ENCERRAMENTO
+=====================================================================
+
+37 - volta para a pasta do projeto
 cd "$HOME/Documents/CEUB/5 Semestre/NoSQL"
 
-29 - derruba o MongoDB
-cd lab01-mongodb && docker compose down
+38 - entra na pasta do Mongo
+cd lab01-mongodb
 
-30 - derruba Elasticsearch, Kibana e Logstash
-cd ../lab02-elastic && docker compose down
+39 - derruba o MongoDB
+docker compose down
 
-31 - derruba Redis e RedisInsight
-cd ../lab03-redis && docker compose down
+40 - entra na pasta do Elastic
+cd ../lab02-elastic
 
-32 - volta para a raiz
+41 - derruba Elasticsearch, Kibana e Logstash
+docker compose down
+
+42 - entra na pasta do Redis
+cd ../lab03-redis
+
+43 - derruba Redis e RedisInsight
+docker compose down
+
+44 - volta para a raiz
 cd ..
 
-33 - confirma que nao sobrou container
+45 - confirma que nao sobrou container
 docker ps
