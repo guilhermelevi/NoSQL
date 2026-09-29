@@ -72,3 +72,21 @@ docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDat
 
 25
 docker start logstash
+
+26
+cd "$HOME/Documents/CEUB/5 Semestre/NoSQL"
+
+27
+cd lab01-mongodb && docker compose down
+
+28
+cd ../lab02-elastic && docker compose down
+
+29
+cd ../lab03-redis && docker compose down
+
+30
+cd ..
+
+31
+docker ps
