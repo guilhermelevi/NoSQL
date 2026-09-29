@@ -1,0 +1,105 @@
+=====================================================================
+ROTEIRO DA APRESENTACAO
+50% ambiente | 25% ingestao de logs | 25% exercicio do professor
+=====================================================================
+
+1.  cd ~/Documents/CEUB/5\ Semestre/NoSQL
+
+2.  cd lab02-elastic && docker compose up -d
+
+3.  cd ../lab03-redis && docker compose up -d
+
+4.  cd ../lab01-mongodb && docker compose up -d
+
+5.  cd ..
+
+6.  docker ps
+
+7.  curl localhost:9200
+
+8.  curl "localhost:9200/_cluster/health?pretty"
+
+9.  docker exec redis redis-cli PING
+
+10. docker exec mongodb-container mongosh --quiet -u admin -p 123456 --authenticationDatabase admin --eval 'db.adminCommand("ping")'
+
+11. abrir http://localhost:5601
+
+12. abrir http://localhost:5540 e clicar em Redis Lab 3
+
+13. abrir MongoDB no VS Code
+    mongodb://admin:123456@localhost:27017/?authSource=admin
+
+14. cat lab02-elastic/logstash/pipeline/logstash.conf
+
+15. grep -A4 logging lab01-mongodb/docker-compose.yml
+
+16. docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin
+
+17. use demo
+
+18. db.setProfilingLevel(0, { slowms: 0 })
+
+19. db.pedidos.insertOne({ cliente: "PROFESSOR-RAUL", valor: 1234.56 })
+
+20. exit
+
+21. curl "localhost:9200/_cat/indices/mongodb-logs-*?v"
+
+22. curl "localhost:9200/mongodb-logs-*/_search?pretty&size=1" -H 'Content-Type: application/json' -d '{"query":{"match_phrase":{"message":"PROFESSOR-RAUL"}}}'
+
+23. Kibana > Discover > data view mongodb-logs-* > Last 15 minutes
+
+24. buscar PROFESSOR-RAUL > Refresh
+
+25. clicar na seta a esquerda da linha > aba JSON
+
+26. adicionar coluna container_name (mouse no campo > +)
+
+27. filtrar c: "NETWORK"
+
+28. docker stop logstash
+
+29. inserir no Mongo (funciona normalmente)
+
+30. docker start logstash
+
+31. exercicio: MongoDB no playground do VS Code
+
+32. exercicio: Elasticsearch no Kibana > Dev Tools
+
+33. exercicio: Redis no RedisInsight > Workbench
+
+=====================================================================
+AVISOS
+=====================================================================
+
+34. passo 18 some a cada restart do Mongo, refazer se reiniciar
+
+35. ordem dos passos 2, 3, 4 importa: Elastic antes do Mongo
+
+36. subir do zero leva ~2 min, quase todo no Kibana
+
+37. nao usar subir.sh, demo.sh nem lab04-integracao
+
+38. MongoDB e Redis nao abrem no navegador
+
+=====================================================================
+DADOS DISPONIVEIS
+=====================================================================
+
+39. MongoDB  dbNoSQLBD: estudantes(10) professores(3) cursos(3) disciplinas(2)
+
+40. MongoDB  aulaIdx: alunos(200.000)  <- usar este para indice e explain
+
+41. MongoDB  loja: produtos(12)
+
+42. Elastic  mongodb-logs-*, meu_indice-000001(22), transacoes-000001(22)
+
+43. Elastic  produtos(12), indice_conhecimento(23)
+
+44. Redis    9 chaves demo:*
+
+45. consulta: GABARITO.md, PARTE1-EVIDENCIAS.md, PARTE2-EVIDENCIAS.md
+
+=====================================================================
