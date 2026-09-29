@@ -44,7 +44,7 @@ if [ "${N:-0}" -eq 0 ] 2>/dev/null; then
 fi
 
 echo ""
-echo "3. o que o Elasticsearch guardou"
+echo "3. a mensagem crua, como o Elasticsearch guardou"
 echo ""
 curl -s "localhost:9200/mongodb-logs-*/_search" -H 'Content-Type: application/json' \
   -d "{\"size\":1,\"sort\":[{\"@timestamp\":\"desc\"}],\"query\":{\"match_phrase\":{\"message\":\"$MARCA\"}}}" \
@@ -52,11 +52,14 @@ curl -s "localhost:9200/mongodb-logs-*/_search" -H 'Content-Type: application/js
 import sys, json
 hit = json.load(sys.stdin)['hits']['hits'][0]
 h = hit['_source']
-m = json.loads(h['message'])
-print('   indice     :', hit['_index'])
-print('   container  :', h.get('container_name'))
-print('   hora       :', m.get('t', {}).get('\$date', ''))
-print('   comando    :', str(m.get('attr', {}).get('command', ''))[:150])
+print('   indice        :', hit['_index'])
+print('   container_name:', h.get('container_name'))
+print('   tag           :', h.get('tag'))
+print('   @timestamp    :', h.get('@timestamp'))
+print()
+print('   campo message (sem nenhum tratamento, exatamente como o mongod escreveu):')
+print()
+print(h['message'])
 "
 
 echo ""
