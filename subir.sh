@@ -85,7 +85,7 @@ fi
 # ---------- 6. conteudo de demonstracao no Redis ----------
 # O lab 3 termina limpando o banco, entao o RedisInsight abriria sem nada
 # para mostrar. Cria um conjunto com prefixo demo: so quando estiver vazio.
-if [ "$(docker exec redis redis-cli DBSIZE | tr -d '\r')" = "0" ]; then
+if [ -z "$(docker exec redis redis-cli --scan --pattern 'demo:*' | head -1)" ]; then
   docker exec -i redis redis-cli >/dev/null 2>&1 <<'REDIS'
 SET demo:cache:pagina:/home "<html>HOME</html>" EX 3600
 SET demo:contador:visitas 1042

@@ -15,6 +15,16 @@ Todos os laboratórios foram executados no **macOS (Apple Silicon) com OrbStack*
 | 01 | MongoDB 8.2 | [`lab01-mongodb/`](lab01-mongodb/) | [GABARITO.md](lab01-mongodb/GABARITO.md) + [Playgrounds/](lab01-mongodb/Playgrounds/) |
 | 02 | Elasticsearch 8.15 + Kibana + Logstash | [`lab02-elastic/`](lab02-elastic/) | [PARTE1-EVIDENCIAS.md](lab02-elastic/PARTE1-EVIDENCIAS.md) + [PARTE2-EVIDENCIAS.md](lab02-elastic/PARTE2-EVIDENCIAS.md) |
 | 03 | Redis 8.2 + RedisInsight | [`lab03-redis/`](lab03-redis/) | [PARTE1-EVIDENCIAS.md](lab03-redis/PARTE1-EVIDENCIAS.md) + [PARTE2-EVIDENCIAS.md](lab03-redis/PARTE2-EVIDENCIAS.md) |
+| 04 | Integração dos três | [`lab04-integracao/`](lab04-integracao/) | [README.md](lab04-integracao/README.md) + `integrar.py` |
+
+## Subir tudo
+
+```bash
+./subir.sh      # sobe os tres labs integrados e deixa pronto para demonstrar
+./demo.sh       # grava no Mongo e acompanha chegar no Elasticsearch
+```
+
+O `subir.sh` liga o OrbStack se preciso, sobe os composes na ordem certa, espera cada serviço, cria a data view no Kibana, registra o Redis no RedisInsight e testa o caminho do log antes de dizer que está pronto.
 
 ## Como subir
 
