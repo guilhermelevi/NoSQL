@@ -82,7 +82,27 @@ else
   ok "RedisInsight: conexao com o Redis registrada"
 fi
 
-# ---------- 6. confere o caminho do log de ponta a ponta ----------
+# ---------- 6. conteudo de demonstracao no Redis ----------
+# O lab 3 termina limpando o banco, entao o RedisInsight abriria sem nada
+# para mostrar. Cria um conjunto com prefixo demo: so quando estiver vazio.
+if [ "$(docker exec redis redis-cli DBSIZE | tr -d '\r')" = "0" ]; then
+  docker exec -i redis redis-cli >/dev/null 2>&1 <<'REDIS'
+SET demo:cache:pagina:/home "<html>HOME</html>" EX 3600
+SET demo:contador:visitas 1042
+HSET demo:user:1001 nome "Guilherme Levi" curso "Engenharia de Software" cidade "Brasilia"
+HSET demo:user:1002 nome "Ana Ribeiro" curso "Ciencia de Dados" cidade "Sao Paulo"
+RPUSH demo:fila:emails "email:boas-vindas" "email:confirmacao" "email:nota-fiscal"
+SADD demo:tags:redis "cache" "fila" "ranking" "sessao"
+ZADD demo:ranking:turma 9.0 "Diana" 8.0 "Bruno" 8.0 "Carlos" 7.5 "Ana" 5.5 "Eduardo"
+XADD demo:stream:pedidos * pedido_id 1001 status novo
+XADD demo:stream:pedidos * pedido_id 1002 status pago
+REDIS
+  ok "Redis populado com chaves demo: ($(docker exec redis redis-cli DBSIZE | tr -d '\r') chaves, uma de cada estrutura)"
+else
+  ok "Redis com $(docker exec redis redis-cli DBSIZE | tr -d '\r') chaves"
+fi
+
+# ---------- 7. confere o caminho do log de ponta a ponta ----------
 espera "testando o caminho Mongo -> Logstash -> Elasticsearch"
 ANTES=$(curl -s "localhost:9200/mongodb-logs-*/_count" 2>/dev/null | python3 -c "import sys,json;print(json.load(sys.stdin).get('count',0))" 2>/dev/null || echo 0)
 $MONGO --eval 'db.getSiblingDB("demo").ensaio.insertOne({marca:"ENSAIO-SUBIR", quando:new Date()})' >/dev/null 2>&1
@@ -104,12 +124,17 @@ TOTAL=$(curl -s "localhost:9200/mongodb-logs-*/_count" 2>/dev/null | python3 -c 
 echo ""
 echo "PRONTO"
 echo ""
-echo "  Kibana         http://localhost:5601     Discover, data view mongodb-logs-*, Last 15 minutes"
-echo "  RedisInsight   http://localhost:5540     ja conectado"
-echo "  Elasticsearch  http://localhost:9200     $TOTAL documentos de log indexados"
+echo "  ABRE NO NAVEGADOR"
+echo "    Kibana         http://localhost:5601    Discover > mongodb-logs-* > Last 15 minutes"
+echo "    RedisInsight   http://localhost:5540    ja conectado, clique em Redis Lab 3"
+echo "    Elasticsearch  http://localhost:9200    $TOTAL documentos de log"
 echo ""
-echo "  MongoDB        localhost:27017           admin / 123456"
-echo "  Redis          localhost:6379            sem senha"
+echo "  NAO ABRE NO NAVEGADOR (protocolo binario, precisa de cliente)"
+echo "    MongoDB        extensao do VS Code, folha verde na barra lateral:"
+echo "                   mongodb://admin:123456@localhost:27017/?authSource=admin"
+echo "                   ou: docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin"
+echo "    Redis          use o RedisInsight acima"
+echo "                   ou: docker exec -it redis redis-cli"
 echo ""
 echo "  Para demonstrar:  ./demo.sh"
 echo ""
