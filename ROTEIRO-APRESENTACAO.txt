@@ -1,137 +1,98 @@
-1
+1 - entra na pasta do projeto
 cd "$HOME/Documents/CEUB/5 Semestre/NoSQL"
-entra na pasta do projeto
 
-2
+2 - sobe Elasticsearch, Kibana e Logstash. Tem que ser o primeiro, para o Logstash ja estar escutando na 12201 quando o Mongo subir
 cd lab02-elastic && docker compose up -d
-sobe Elasticsearch, Kibana e Logstash. Tem que ser o primeiro, para o
-Logstash ja estar escutando na 12201 quando o Mongo subir
 
-3
+3 - sobe Redis e RedisInsight
 cd ../lab03-redis && docker compose up -d
-sobe Redis e RedisInsight
 
-4
+4 - sobe o MongoDB
 cd ../lab01-mongodb && docker compose up -d
-sobe o MongoDB
 
-5
+5 - volta para a raiz do projeto
 cd ..
-volta para a raiz do projeto
 
-6
+6 - lista os containers rodando, devem aparecer 6
 docker ps
-lista os containers rodando, devem aparecer 6
 
-7
+7 - confirma o Elasticsearch, devolve a versao e o nome do cluster
 curl localhost:9200
-confirma o Elasticsearch, devolve a versao e o nome do cluster
 
-8
+8 - estado do cluster. Fica yellow porque com 1 no so as replicas nao tem onde ser alocadas
 curl "localhost:9200/_cluster/health?pretty"
-estado do cluster. Fica yellow porque com 1 no so as replicas nao tem
-onde ser alocadas
 
-9
+9 - confirma o Redis, devolve PONG
 docker exec redis redis-cli PING
-confirma o Redis, devolve PONG
 
-10
+10 - confirma o MongoDB, devolve ok 1
 docker exec mongodb-container mongosh --quiet -u admin -p 123456 --authenticationDatabase admin --eval 'db.adminCommand("ping")'
-confirma o MongoDB, devolve ok 1
 
-11
+11 - abre o Kibana
 http://localhost:5601
-abre o Kibana
 
-12
+12 - abre o RedisInsight, clicar em Redis Lab 3
 http://localhost:5540
-abre o RedisInsight, clicar em Redis Lab 3
 
-13
+13 - string de conexao do MongoDB para a extensao do VS Code
 mongodb://admin:123456@localhost:27017/?authSource=admin
-string de conexao do MongoDB para a extensao do VS Code
 
-14
+14 - mostra o pipeline: recebe GELF na 12201 e indexa no Elasticsearch num indice por dia
 cat lab02-elastic/logstash/pipeline/logstash.conf
-mostra o pipeline: recebe GELF na 12201 e indexa no Elasticsearch num
-indice por dia
 
-15
+15 - mostra o outro lado, o driver de log gelf no compose do MongoDB
 grep -A4 logging lab01-mongodb/docker-compose.yml
-mostra o outro lado, o driver de log gelf no compose do MongoDB
 
-16
+16 - entra no shell do MongoDB
 docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin
-entra no shell do MongoDB
 
-17
+17 - muda para o banco demo
 use demo
-muda para o banco demo
 
-18
+18 - faz o Mongo registrar toda operacao no log. Sem isso ele so registra as acima de 100ms e o insert nao gera linha nenhuma. Some a cada restart
 db.setProfilingLevel(0, { slowms: 0 })
-faz o Mongo registrar toda operacao no log. Sem isso ele so registra as
-acima de 100ms e o insert nao gera linha nenhuma. Some a cada restart
 
-19
+19 - insere o documento. Devolve acknowledged true e o insertedId
 db.pedidos.insertOne({ cliente: "PROFESSOR-RAUL", valor: 1234.56 })
-insere o documento. Devolve acknowledged true e o insertedId
 
-20
+20 - mostra o documento gravado no MongoDB, comprovando a insercao
 db.pedidos.find({ cliente: "PROFESSOR-RAUL" })
-mostra o documento gravado no MongoDB, comprovando a insercao
 
-21
+21 - quantos documentos existem na colecao
 db.pedidos.countDocuments({})
-quantos documentos existem na colecao
 
-22
+22 - sai do shell do MongoDB
 exit
-sai do shell do MongoDB
 
-23
+23 - lista os indices de log, um por dia
 curl "localhost:9200/_cat/indices/mongodb-logs-*?v"
-lista os indices de log, um por dia
 
-24
+24 - busca no Elasticsearch o log do insert. O campo message traz a linha do mongod crua, sem tratamento, com o documento inteiro dentro
 curl "localhost:9200/mongodb-logs-*/_search?pretty&size=1" -H 'Content-Type: application/json' -d '{"query":{"match_phrase":{"message":"PROFESSOR-RAUL"}}}'
-busca no Elasticsearch o log do insert. O campo message traz a linha do
-mongod crua, sem tratamento, com o documento inteiro dentro
 
-25
+25 - derruba o Logstash
 docker stop logstash
-derruba o Logstash
 
-26
+26 - insere com o Logstash fora do ar. O Mongo funciona normal e o log se perde, porque GELF e UDP e nao tem buffer
 docker exec -it mongodb-container mongosh -u admin -p 123456 --authenticationDatabase admin --eval 'db.getSiblingDB("demo").pedidos.insertOne({ cliente: "SEM-LOGSTASH" })'
-insere com o Logstash fora do ar. O Mongo funciona normal e o log se
-perde, porque GELF e UDP e nao tem buffer
 
-27
+27 - sobe o Logstash de volta
 docker start logstash
-sobe o Logstash de volta
 
-28
+28 - volta para a pasta do projeto
 cd "$HOME/Documents/CEUB/5 Semestre/NoSQL"
-volta para a pasta do projeto
 
-29
+29 - derruba o MongoDB
 cd lab01-mongodb && docker compose down
-derruba o MongoDB
 
-30
+30 - derruba Elasticsearch, Kibana e Logstash
 cd ../lab02-elastic && docker compose down
-derruba Elasticsearch, Kibana e Logstash
 
-31
+31 - derruba Redis e RedisInsight
 cd ../lab03-redis && docker compose down
-derruba Redis e RedisInsight
 
-32
+32 - volta para a raiz
 cd ..
-volta para a raiz
 
-33
+33 - confirma que nao sobrou container
 docker ps
-confirma que nao sobrou container
